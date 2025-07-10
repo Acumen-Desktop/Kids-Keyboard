@@ -2,19 +2,14 @@
   "name": "kids-keyboard",
   "version": "0.9.0",
   "description": "A lightweight, accessible virtual keyboard designed specifically for children's typing education. Inspired by npm package 'simple-keyboard'.",
-  "main": "dist/kids-keyboard.js",
-  "types": "dist/kids-keyboard.d.ts",
+  "main": "src/kids-keyboard.js",
+  "types": "src/kids-keyboard.d.ts",
   "files": [
-    "dist/",
     "src/",
     "README.md",
     "LICENSE"
   ],
   "scripts": {
-    "build": "npm run build:umd && npm run build:css",
-    "build:umd": "mkdir -p dist && cp src/kids-keyboard.js dist/kids-keyboard.js",
-    "build:css": "mkdir -p dist && cp src/kids-keyboard.css dist/kids-keyboard.css",
-    "prepare": "npm run build",
     "test": "echo \"Tests coming in v1.0.0\" && exit 0"
   },
   "keywords": [
@@ -33,12 +28,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-org/kids-keyboard.git"
+    "url": "https://github.com/Acumen-Desktop/Kids-Keyboard.git"
   },
   "bugs": {
-    "url": "https://github.com/your-org/kids-keyboard/issues"
+    "url": "https://github.com/Acumen-Desktop/Kids-Keyboard/issues"
   },
-  "homepage": "https://github.com/your-org/kids-keyboard#readme",
+  "homepage": "https://github.com/Acumen-Desktop/Kids-Keyboard/blob/main/README.md",
   "engines": {
     "node": ">=12.0.0"
   },
