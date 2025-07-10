@@ -134,8 +134,8 @@
 
             <div class="control-group">
                 <label>Speed:</label>
-                <input type="range" id="speech-rate" class="slider" min="0.5" max="2" step="0.1" value="0.8">
-                <span id="rate-value">0.8x</span>
+                <input type="range" id="speech-rate" class="slider" min="0.5" max="2" step="0.1" value="2.0">
+                <span id="rate-value">2.0x</span>
             </div>
 
             <div class="control-group">
@@ -165,19 +165,43 @@
         </div>
     </div>
 
-    <script src="../src/kids-keyboard.js"></script>
-    <script src="../src/features/kids-keyboard-audio-webAPI.js"></script>
+    <script src="../src/performance/kids-keyboard-optimized.js"></script>
+    <script src="../src/performance/kids-keyboard-audio-functional.js"></script>
     <script>
         console.log('🎵 Phase 1A: Functional Audio Testing Implementation');
 
         let audioSystem = null;
+
+        // Update audio status display (define first)
+        const updateAudioStatus = (success = true) => {
+            const statusEl = document.getElementById('audio-status');
+
+            if (!success || !audioSystem) {
+                statusEl.innerHTML = '❌ Web Speech API not supported in this browser';
+                statusEl.className = 'status-indicator error';
+                return;
+            }
+
+            const status = audioSystem.getStatus();
+
+            if (status.supported && status.initialized) {
+                statusEl.innerHTML = `✅ Audio system ready! ${status.voicesAvailable} voices available. Selected: ${status.selectedVoice}`;
+                statusEl.className = 'status-indicator ready';
+            } else if (status.supported) {
+                statusEl.innerHTML = '🔄 Loading voices...';
+                statusEl.className = 'status-indicator';
+            } else {
+                statusEl.innerHTML = '❌ Web Speech API not supported in this browser';
+                statusEl.className = 'status-indicator error';
+            }
+        };
 
         // Initialize audio system (async)
         const initializeAudio = async () => {
             try {
                 audioSystem = await createKidsKeyboardAudio({
                     enabled: true,
-                    rate: 0.8,
+                    rate: 2.0,  // Use the faster default rate
                     pitch: 1.1
                 });
 
@@ -362,29 +386,6 @@
             return associations[letter.toLowerCase()] || letter;
         }
 
-        // Update audio status display
-        const updateAudioStatus = (success = true) => {
-            const statusEl = document.getElementById('audio-status');
-
-            if (!success || !audioSystem) {
-                statusEl.innerHTML = '❌ Web Speech API not supported in this browser';
-                statusEl.className = 'status-indicator error';
-                return;
-            }
-
-            const status = audioSystem.getStatus();
-
-            if (status.supported && status.initialized) {
-                statusEl.innerHTML = `✅ Audio system ready! ${status.voicesAvailable} voices available. Selected: ${status.selectedVoice}`;
-                statusEl.className = 'status-indicator ready';
-            } else if (status.supported) {
-                statusEl.innerHTML = '🔄 Loading voices...';
-                statusEl.className = 'status-indicator';
-            } else {
-                statusEl.innerHTML = '❌ Web Speech API not supported in this browser';
-                statusEl.className = 'status-indicator error';
-            }
-        };
 
         // Test button (for debugging)
         console.log('🎯 After audio loads, type audioSystem.test() in console to test audio');

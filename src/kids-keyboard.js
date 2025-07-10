@@ -318,7 +318,7 @@ const renderKeyboard = (container, state, keyElements, onKeyPress) => {
                 else if (keyName === 'space') originalKey = 'Space';
                 else if (keyName === 'tab') originalKey = 'Tab';
 
-                safeCallback(onKeyPress, originalKey, e);
+                safeCallback(onKeyPress, originalKey, e, 'virtual');
             }
         };
         
@@ -522,8 +522,8 @@ function createKidsKeyboard(options = {}) {
     /**
      * Handles key press events from both virtual and physical keyboards
      */
-    const handleKeyPress = (key, event) => {
-        safeCallback(mergedOptions.onKeyPress, key, event);
+    const handleKeyPress = (key, event, inputSource = 'unknown') => {
+        safeCallback(mergedOptions.onKeyPress, key, event, inputSource);
 
         let newState = { ...state };
         let inputChanged = false;
@@ -608,10 +608,10 @@ function createKidsKeyboard(options = {}) {
         // Handle key press
         if (virtualKey.length === 1 || ['Backspace', 'Enter', 'Space', 'Tab'].includes(virtualKey)) {
             event.preventDefault();
-            handleKeyPress(virtualKey, event);
+            handleKeyPress(virtualKey, event, 'physical');
         } else if (virtualKey === 'CapsLock') {
             event.preventDefault();
-            handleKeyPress(virtualKey, event);
+            handleKeyPress(virtualKey, event, 'physical');
         } else if (virtualKey === 'ShiftLeft' || virtualKey === 'ShiftRight') {
             // Shift keys are already handled by setState above
         }

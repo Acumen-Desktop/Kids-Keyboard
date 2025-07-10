@@ -6,8 +6,10 @@
   "types": "src/kids-keyboard.d.ts",
   "files": [
     "src/",
+    "examples/",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "_notes"
   ],
   "scripts": {
     "test": "echo \"Tests coming in v1.0.0\" && exit 0"

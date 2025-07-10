@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kids Keyboard - Performance Comparison</title>
+    <link rel="stylesheet" href="../src/kids-keyboard.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        #app-container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            margin: 0 auto;
+            max-width: 1200px;
+            padding: 30px;
+        }
+
+        .performance-controls {
+            background: #f8f9fa;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            padding: 20px;
+        }
+
+        .controls-row {
+            align-items: center;
+            display: flex;
+            gap: 20px;
+            margin-bottom: 15px;
+        }
+
+        .performance-metrics {
+            background: #e8f5e8;
+            border: 1px solid #c8e6c9;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            padding: 15px;
+        }
+
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .keyboard-container {
+            margin-bottom: 30px;
+        }
+
+        .keyboard-container h3 {
+            color: #2d3748;
+            margin-bottom: 15px;
+        }
+
+        button {
+            background: #4CAF50;
+            border: none;
+            border-radius: 4px;
+            color: white;
+            cursor: pointer;
+            padding: 8px 16px;
+        }
+
+        button:hover {
+            background: #45a049;
+        }
+
+        button:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+        }
+
+        .toggle-button {
+            background: #ff9800;
+        }
+
+        .toggle-button:hover {
+            background: #f57c00;
+        }
+
+        #performance-log {
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            height: 200px;
+            overflow-y: auto;
+            padding: 10px;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app-container">
+        <h1>Kids Keyboard Performance Test</h1>
+
+        <div class="performance-controls">
+            <h3>Performance Testing Controls</h3>
+            <div class="controls-row">
+                <button id="start-test">Start Performance Test</button>
+                <button id="rapid-test">Rapid Key Test (100 keys)</button>
+                <button id="audio-test">Audio Performance Test</button>
+                <button id="clear-log">Clear Log</button>
+                <button id="toggle-version" class="toggle-button">Switch to Optimized Version</button>
+            </div>
+            <div class="controls-row">
+                <label>Test Duration: <input type="number" id="test-duration" value="5" min="1" max="30"> seconds</label>
+                <label>Key Interval: <input type="number" id="key-interval" value="50" min="10" max="500"> ms</label>
+            </div>
+        </div>
+
+        <div class="performance-metrics">
+            <h3>Performance Metrics</h3>
+            <div class="metric-row">
+                <span>Keys Per Second:</span>
+                <span id="keys-per-second">0</span>
+            </div>
+            <div class="metric-row">
+                <span>Average Response Time:</span>
+                <span id="avg-response-time">0ms</span>
+            </div>
+            <div class="metric-row">
+                <span>Memory Usage:</span>
+                <span id="memory-usage">Unknown</span>
+            </div>
+            <div class="metric-row">
+                <span>Audio Lag:</span>
+                <span id="audio-lag">0ms</span>
+            </div>
+            <div class="metric-row">
+                <span>DOM Updates:</span>
+                <span id="dom-updates">0</span>
+            </div>
+        </div>
+
+        <!-- Original Version -->
+        <div class="keyboard-container" id="original-container">
+            <h3>Original Version (kids-keyboard.js)</h3>
+            <div id="kids-keyboard-tutor-original">
+                <div id="kids-keyboard-output-original">
+                    <textarea id="kids-keyboard-text-original" 
+                              placeholder="Hover to activate tutor mode - Original version"></textarea>
+                    <div id="kids-keyboard-display-original"></div>
+                </div>
+                <div id="kids-keyboard-input-original"></div>
+            </div>
+        </div>
+
+        <!-- Optimized Version -->
+        <div class="keyboard-container" id="optimized-container" style="display: none;">
+            <h3>Optimized Version (kids-keyboard-optimized.js)</h3>
+            <div id="kids-keyboard-tutor-optimized">
+                <div id="kids-keyboard-output-optimized">
+                    <textarea id="kids-keyboard-text-optimized" 
+                              placeholder="Hover to activate tutor mode - Optimized version"></textarea>
+                    <div id="kids-keyboard-display-optimized"></div>
+                </div>
+                <div id="kids-keyboard-input-optimized"></div>
+            </div>
+        </div>
+
+        <div class="performance-controls">
+            <h3>Performance Log</h3>
+            <div id="performance-log"></div>
+        </div>
+    </div>
+
+    <script src="../src/kids-keyboard.js"></script>
+    <script src="../src/performance/kids-keyboard-optimized.js"></script>
+    <script src="../src/features/kids-keyboard-audio-webAPI.js"></script>
+    <script src="../src/performance/kids-keyboard-audio-optimized.js"></script>
+
+    <script>
+        class PerformanceTester {
+            constructor() {
+                this.currentKeyboard = null;
+                this.currentAudio = null;
+                this.isOptimized = false;
+                this.testMetrics = {
+                    keyPresses: 0,
+                    totalResponseTime: 0,
+                    audioLag: 0,
+                    domUpdates: 0
+                };
+                this.testInterval = null;
+                this.performanceObserver = null;
+                
+                this.initializeUI();
+                this.setupPerformanceMonitoring();
+                this.loadOriginalVersion();
+            }
+
+            initializeUI() {
+                document.getElementById('start-test').addEventListener('click', () => this.startPerformanceTest());
+                document.getElementById('rapid-test').addEventListener('click', () => this.rapidKeyTest());
+                document.getElementById('audio-test').addEventListener('click', () => this.audioPerformanceTest());
+                document.getElementById('clear-log').addEventListener('click', () => this.clearLog());
+                document.getElementById('toggle-version').addEventListener('click', () => this.toggleVersion());
+            }
+
+            setupPerformanceMonitoring() {
+                // Monitor memory usage if available
+                if (performance.memory) {
+                    setInterval(() => {
+                        const memory = performance.memory;
+                        const usedMB = Math.round(memory.usedJSHeapSize / 1024 / 1024);
+                        document.getElementById('memory-usage').textContent = `${usedMB} MB`;
+                    }, 1000);
+                }
+
+                // Monitor DOM mutations
+                const observer = new MutationObserver((mutations) => {
+                    this.testMetrics.domUpdates += mutations.length;
+                    document.getElementById('dom-updates').textContent = this.testMetrics.domUpdates;
+                });
+
+                observer.observe(document.body, {
+                    childList: true,
+                    subtree: true,
+                    attributes: true,
+                    attributeOldValue: true
+                });
+            }
+
+            async loadOriginalVersion() {
+                try {
+                    this.currentKeyboard = createKidsKeyboard({
+                        container: '#kids-keyboard-input-original',
+                        targetOutput: '#kids-keyboard-text-original',
+                        tutorContainer: '#kids-keyboard-tutor-original',
+                        debug: true,
+                        onChange: (input) => this.trackPerformance('input-change'),
+                        onKeyPress: (key) => this.trackKeyPress(key)
+                    });
+
+                    this.currentAudio = await createKidsKeyboardAudio();
+                    this.log('✅ Original version loaded');
+                } catch (error) {
+                    this.log(`❌ Error loading original version: ${error.message}`);
+                }
+            }
+
+            async loadOptimizedVersion() {
+                try {
+                    // Note: The optimized script needs to be loaded separately
+                    // This would use the optimized createKidsKeyboard function
+                    this.currentKeyboard = createKidsKeyboard({
+                        container: '#kids-keyboard-input-optimized',
+                        targetOutput: '#kids-keyboard-text-optimized',
+                        tutorContainer: '#kids-keyboard-tutor-optimized',
+                        debug: true,
+                        onChange: (input) => this.trackPerformance('input-change'),
+                        onKeyPress: (key) => this.trackKeyPress(key)
+                    });
+
+                    this.currentAudio = await createKidsKeyboardAudio();
+                    this.log('✅ Optimized version loaded');
+                } catch (error) {
+                    this.log(`❌ Error loading optimized version: ${error.message}`);
+                }
+            }
+
+            toggleVersion() {
+                const toggleBtn = document.getElementById('toggle-version');
+                const originalContainer = document.getElementById('original-container');
+                const optimizedContainer = document.getElementById('optimized-container');
+
+                if (this.isOptimized) {
+                    // Switch to original
+                    originalContainer.style.display = 'block';
+                    optimizedContainer.style.display = 'none';
+                    toggleBtn.textContent = 'Switch to Optimized Version';
+                    this.loadOriginalVersion();
+                    this.isOptimized = false;
+                    this.log('🔄 Switched to Original version');
+                } else {
+                    // Switch to optimized
+                    originalContainer.style.display = 'none';
+                    optimizedContainer.style.display = 'block';
+                    toggleBtn.textContent = 'Switch to Original Version';
+                    this.loadOptimizedVersion();
+                    this.isOptimized = true;
+                    this.log('🔄 Switched to Optimized version');
+                }
+
+                this.resetMetrics();
+            }
+
+            trackKeyPress(key) {
+                this.testMetrics.keyPresses++;
+                const responseTime = performance.now() - this.lastKeyTime;
+                this.testMetrics.totalResponseTime += responseTime;
+                
+                this.updateMetricsDisplay();
+            }
+
+            trackPerformance(action) {
+                const now = performance.now();
+                // Track various performance metrics
+            }
+
+            startPerformanceTest() {
+                const duration = parseInt(document.getElementById('test-duration').value) * 1000;
+                const interval = parseInt(document.getElementById('key-interval').value);
+                
+                this.resetMetrics();
+                this.log(`🚀 Starting ${duration/1000}s performance test (${interval}ms intervals)`);
+                
+                const testKeys = 'abcdefghijklmnopqrstuvwxyz0123456789'.split('');
+                let keyIndex = 0;
+                
+                this.testInterval = setInterval(() => {
+                    const key = testKeys[keyIndex % testKeys.length];
+                    this.simulateKeyPress(key);
+                    keyIndex++;
+                }, interval);
+
+                setTimeout(() => {
+                    clearInterval(this.testInterval);
+                    this.finishPerformanceTest();
+                }, duration);
+            }
+
+            rapidKeyTest() {
+                this.resetMetrics();
+                this.log('⚡ Starting rapid key test (100 keys)');
+                
+                const testKeys = 'abcdefghijklmnopqrstuvwxyz'.split('');
+                let completed = 0;
+                
+                const rapidInterval = setInterval(() => {
+                    const key = testKeys[completed % testKeys.length];
+                    this.simulateKeyPress(key);
+                    completed++;
+                    
+                    if (completed >= 100) {
+                        clearInterval(rapidInterval);
+                        this.log(`✅ Rapid test completed: ${completed} keys`);
+                        this.updateMetricsDisplay();
+                    }
+                }, 10); // Very fast - 10ms intervals
+            }
+
+            async audioPerformanceTest() {
+                if (!this.currentAudio) {
+                    this.log('❌ Audio system not available');
+                    return;
+                }
+
+                this.log('🎵 Starting audio performance test');
+                const testKeys = 'abcdefghijklmnopqrstuvwxyz'.split('');
+                
+                for (let i = 0; i < testKeys.length; i++) {
+                    const startTime = performance.now();
+                    
+                    if (this.currentAudio.playPhysicalKeySound) {
+                        this.currentAudio.playPhysicalKeySound(testKeys[i]);
+                    }
+                    
+                    const audioLag = performance.now() - startTime;
+                    this.testMetrics.audioLag += audioLag;
+                    
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                }
+                
+                const avgAudioLag = this.testMetrics.audioLag / testKeys.length;
+                document.getElementById('audio-lag').textContent = `${avgAudioLag.toFixed(2)}ms`;
+                this.log(`✅ Audio test completed. Average lag: ${avgAudioLag.toFixed(2)}ms`);
+            }
+
+            simulateKeyPress(key) {
+                this.lastKeyTime = performance.now();
+                
+                if (this.currentKeyboard) {
+                    // Simulate physical key press
+                    const event = new KeyboardEvent('keydown', {
+                        key: key,
+                        code: `Key${key.toUpperCase()}`,
+                        bubbles: true
+                    });
+                    document.dispatchEvent(event);
+                }
+
+                if (this.currentAudio && this.currentAudio.playPhysicalKeySound) {
+                    this.currentAudio.playPhysicalKeySound(key);
+                }
+            }
+
+            finishPerformanceTest() {
+                const avgResponseTime = this.testMetrics.totalResponseTime / this.testMetrics.keyPresses;
+                this.log(`✅ Performance test completed:`);
+                this.log(`   Keys pressed: ${this.testMetrics.keyPresses}`);
+                this.log(`   Average response time: ${avgResponseTime.toFixed(2)}ms`);
+                this.log(`   DOM updates: ${this.testMetrics.domUpdates}`);
+                
+                this.updateMetricsDisplay();
+            }
+
+            updateMetricsDisplay() {
+                const kps = this.testMetrics.keyPresses / (performance.now() / 1000);
+                const avgResponse = this.testMetrics.totalResponseTime / this.testMetrics.keyPresses || 0;
+                
+                document.getElementById('keys-per-second').textContent = kps.toFixed(2);
+                document.getElementById('avg-response-time').textContent = `${avgResponse.toFixed(2)}ms`;
+                document.getElementById('dom-updates').textContent = this.testMetrics.domUpdates;
+            }
+
+            resetMetrics() {
+                this.testMetrics = {
+                    keyPresses: 0,
+                    totalResponseTime: 0,
+                    audioLag: 0,
+                    domUpdates: 0
+                };
+                this.updateMetricsDisplay();
+            }
+
+            clearLog() {
+                document.getElementById('performance-log').textContent = '';
+            }
+
+            log(message) {
+                const logElement = document.getElementById('performance-log');
+                const timestamp = new Date().toLocaleTimeString();
+                logElement.textContent += `[${timestamp}] ${message}\n`;
+                logElement.scrollTop = logElement.scrollHeight;
+            }
+        }
+
+        // Initialize performance tester when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new PerformanceTester();
+        });
+    </script>
+</body>
+</html>
