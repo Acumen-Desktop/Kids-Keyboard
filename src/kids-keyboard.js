@@ -234,13 +234,6 @@ const createKeyElement = (key, defaultLayout, shiftLayout, rowIndex, keyIndex) =
     const element = document.createElement('button');
     element.className = 'kids-keyboard__key';
     element.dataset.key = key.toLowerCase();
-    element.dataset.rowIndex = rowIndex;
-    element.dataset.keyIndex = keyIndex;
-
-    // Add ARIA attributes for accessibility
-    element.setAttribute('role', 'button');
-    element.setAttribute('tabindex', '0');
-    element.setAttribute('aria-label', `Key ${getKeyDisplayText(key)}`);
 
     // Store both default and shift characters for this key position
     const defaultChar = defaultLayout[rowIndex][keyIndex];
@@ -313,10 +306,18 @@ const renderKeyboard = (container, state, keyElements, onKeyPress) => {
         const handleContainerClick = (e) => {
             if (e.target.matches('.kids-keyboard__key')) {
                 e.preventDefault();
-                // Find the original key from the layout
-                const rowIndex = parseInt(e.target.dataset.rowIndex);
-                const keyIndex = parseInt(e.target.dataset.keyIndex);
-                const originalKey = KEYBOARD_LAYOUTS.default[rowIndex][keyIndex];
+                // Get the key directly from the data attribute and convert back to original case
+                const keyName = e.target.dataset.key;
+                // Convert back to original key format (handle special cases)
+                let originalKey = keyName;
+                if (keyName === 'shiftleft') originalKey = 'ShiftLeft';
+                else if (keyName === 'shiftright') originalKey = 'ShiftRight';
+                else if (keyName === 'capslock') originalKey = 'CapsLock';
+                else if (keyName === 'backspace') originalKey = 'Backspace';
+                else if (keyName === 'enter') originalKey = 'Enter';
+                else if (keyName === 'space') originalKey = 'Space';
+                else if (keyName === 'tab') originalKey = 'Tab';
+
                 safeCallback(onKeyPress, originalKey, e);
             }
         };
@@ -428,7 +429,7 @@ function createKidsKeyboard(options = {}) {
     // Merge default options
     const defaultOptions = {
         debug: false,
-        targetInput: null,
+        targetOutput: null,
         tutorContainer: null
     };
     const mergedOptions = { ...defaultOptions, ...options };
@@ -451,20 +452,20 @@ function createKidsKeyboard(options = {}) {
         throw new Error(`Container must be an HTMLElement. Received: ${typeof container}`);
     }
 
-    // Get target input element for tutor mode
-    let targetInput = null;
-    if (mergedOptions.targetInput) {
+    // Get target output element for tutor mode
+    let targetOutput = null;
+    if (mergedOptions.targetOutput) {
         try {
-            targetInput = typeof mergedOptions.targetInput === 'string' 
-                ? document.querySelector(mergedOptions.targetInput)
-                : mergedOptions.targetInput;
+            targetOutput = typeof mergedOptions.targetOutput === 'string'
+                ? document.querySelector(mergedOptions.targetOutput)
+                : mergedOptions.targetOutput;
         } catch (error) {
-            console.warn(`Invalid target input selector: ${mergedOptions.targetInput}`);
+            console.warn(`Invalid target output selector: ${mergedOptions.targetOutput}`);
         }
-        
-        if (targetInput && !(targetInput instanceof HTMLElement)) {
-            console.warn(`Target input must be an HTMLElement. Received: ${typeof targetInput}`);
-            targetInput = null;
+
+        if (targetOutput && !(targetOutput instanceof HTMLElement)) {
+            console.warn(`Target output must be an HTMLElement. Received: ${typeof targetOutput}`);
+            targetOutput = null;
         }
     }
 
@@ -572,17 +573,17 @@ function createKidsKeyboard(options = {}) {
         // Update state consistently
         setState(newState);
 
-        // Notify about input changes and sync with target input
+        // Notify about input changes and sync with target output
         if (inputChanged) {
-            // Sync with target input if in tutor mode
-            if (isTutorMode && targetInput) {
-                targetInput.value = newState.input;
-                targetInput.setSelectionRange(newState.caretPosition, newState.caretPosition);
-                
+            // Sync with target output if in tutor mode
+            if (isTutorMode && targetOutput) {
+                targetOutput.value = newState.input;
+                targetOutput.setSelectionRange(newState.caretPosition, newState.caretPosition);
+
                 // Trigger input event for form validation and other listeners
-                targetInput.dispatchEvent(new Event('input', { bubbles: true }));
+                targetOutput.dispatchEvent(new Event('input', { bubbles: true }));
             }
-            
+
             safeCallback(mergedOptions.onChange, newState.input);
         }
     };
@@ -655,18 +656,18 @@ function createKidsKeyboard(options = {}) {
             console.log('Tutor mode activated (mouse enter)');
         }
         
-        // Sync keyboard state with target input
-        if (targetInput) {
+        // Sync keyboard state with target output
+        if (targetOutput) {
             setState({
                 ...state,
-                input: targetInput.value || '',
-                caretPosition: targetInput.selectionStart || 0
+                input: targetOutput.value || '',
+                caretPosition: targetOutput.selectionStart || 0
             });
         }
         
         // Add visual indicator to tutor container
         if (tutorContainer) {
-            tutorContainer.classList.add('kids-keyboard__tutor--active');
+            tutorContainer.classList.add('active');
         }
         
         safeCallback(mergedOptions.onTutorModeChange, true);
@@ -683,7 +684,7 @@ function createKidsKeyboard(options = {}) {
         
         // Remove visual indicator from tutor container
         if (tutorContainer) {
-            tutorContainer.classList.remove('kids-keyboard__tutor--active');
+            tutorContainer.classList.remove('active');
         }
         
         safeCallback(mergedOptions.onTutorModeChange, false);
@@ -736,7 +737,7 @@ function createKidsKeyboard(options = {}) {
         
         // Clear state references for garbage collection
         state = null;
-        targetInput = null;
+        targetOutput = null;
         tutorContainer = null;
     };
 
@@ -785,7 +786,7 @@ function createKidsKeyboard(options = {}) {
 
         // Tutor mode methods
         isTutorModeActive: () => isTutorMode,
-        getTargetInput: () => targetInput,
+        getTargetOutput: () => targetOutput,
 
         // Lifecycle methods
         destroy

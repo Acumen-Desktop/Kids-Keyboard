@@ -1,0 +1,1 @@
+Currently the mouse click behavior on the Virtual Keyboard (VK) is odd and inconsistent. We only want the Physical Keyboard (PK) to function and update the output textarea. If the user mouse clicks a key

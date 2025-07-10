@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,7 +14,7 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
         }
-        
+
         #app-container {
             max-width: 1000px;
             margin: 0 auto;
@@ -22,14 +23,14 @@
             padding: 30px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
         }
-        
+
         h1 {
             text-align: center;
             color: #2c3e50;
             margin-bottom: 30px;
         }
-        
-        #kids-keyboard-tutor-input {
+
+        #kids-keyboard-tutor-output {
             width: calc(100% - 40px);
             min-height: 120px;
             padding: 15px;
@@ -43,12 +44,12 @@
             margin-bottom: 20px;
         }
 
-        #kids-keyboard-tutor-input:focus {
+        #kids-keyboard-tutor-output:focus {
             outline: none;
             border-color: #4CAF50;
             box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
         }
-        
+
         #kids-keyboard-stats {
             display: flex;
             gap: 20px;
@@ -78,8 +79,8 @@
             font-weight: 600;
             color: #2c3e50;
         }
-        
-        #kids-keyboard-tutor-container {
+
+        #kids-keyboard-tutor {
             position: relative;
             transition: all 0.3s ease;
             border-radius: 12px;
@@ -90,7 +91,7 @@
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
         }
 
-        #kids-keyboard-tutor-container::before {
+        #kids-keyboard-tutor::before {
             content: "TUTOR MODE OFF";
             position: absolute;
             top: -18px;
@@ -107,7 +108,7 @@
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
         }
 
-        #kids-keyboard-tutor-container::after {
+        #kids-keyboard-tutor::after {
             content: "🎯";
             position: absolute;
             top: -22px;
@@ -117,13 +118,13 @@
             transition: all 0.3s ease;
         }
 
-        #kids-keyboard-tutor-container.kids-keyboard__tutor--active {
+        #kids-keyboard-tutor.kids-keyboard__tutor--active {
             background-color: rgba(76, 175, 80, 0.08);
             border: 2px solid #4CAF50;
             box-shadow: 0 4px 20px rgba(76, 175, 80, 0.25);
         }
 
-        #kids-keyboard-tutor-container.kids-keyboard__tutor--active::before {
+        #kids-keyboard-tutor.kids-keyboard__tutor--active::before {
             content: "TUTOR MODE ON";
             background: linear-gradient(135deg, #4CAF50, #66BB6A);
             color: white;
@@ -131,16 +132,17 @@
             transform: scale(1.05);
         }
 
-        #kids-keyboard-tutor-container.kids-keyboard__tutor--active::after {
+        #kids-keyboard-tutor.kids-keyboard__tutor--active::after {
             font-size: 24px;
             transform: scale(1.1) rotate(5deg);
         }
     </style>
 </head>
+
 <body>
     <div id="app-container">
         <h1>Kids Keyboard v0.9.0 - Example</h1>
-        
+
         <div id="kids-keyboard-stats">
             <div class="kids-keyboard-stat-item">
                 <div class="kids-keyboard-stat-item__label">Characters</div>
@@ -156,23 +158,27 @@
             </div>
         </div>
 
-        <div id="kids-keyboard-tutor-container">
-            <textarea id="kids-keyboard-tutor-input"
-                      placeholder="Hover over this area to activate tutor mode, then start typing!"></textarea>
-            <div id="kids-keyboard-container"></div>
+        <div id="kids-keyboard-tutor">
+            <div id="kids-keyboard-output">
+                <textarea id="kids-keyboard-text"
+                    placeholder="Hover over this area to activate tutor mode, then start typing!"></textarea>
+                <div id="kids-keyboard-display">
+                </div>
+            </div>
+            <div id="kids-keyboard-input"></div>
         </div>
     </div>
 
     <script src="../src/kids-keyboard.js"></script>
     <script>
         let keyboard;
-        const tutorContainer = document.getElementById('kids-keyboard-tutor-container');
+        const tutorContainer = document.getElementById('kids-keyboard-tutor');
 
         function initKeyboard() {
             keyboard = createKidsKeyboard({
-                container: '#kids-keyboard-container',
-                targetInput: '#kids-keyboard-tutor-input',
-                tutorContainer: '#kids-keyboard-tutor-container',
+                container: '#kids-keyboard-input',
+                targetOutput: '#kids-keyboard-text',
+                tutorContainer: '#kids-keyboard-tutor',
                 debug: true,
 
                 onChange: (input) => {
@@ -187,7 +193,7 @@
                 onTutorModeChange: (isActive) => {
                     console.log('Tutor mode:', isActive ? 'ON' : 'OFF');
                     document.getElementById('kids-keyboard-tutor-mode').textContent = isActive ? 'ON' : 'OFF';
-                    tutorContainer.classList.toggle('kids-keyboard__tutor--active', isActive);
+                    tutorContainer.classList.toggle('active', isActive);
                 }
             });
         }
@@ -199,12 +205,12 @@
         }
 
         // Initialize when page loads
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             initKeyboard();
             updateStats();
 
             // Sync external typing with keyboard
-            document.getElementById('kids-keyboard-tutor-input').addEventListener('input', function(e) {
+            document.getElementById('kids-keyboard-text').addEventListener('input', function (e) {
                 if (keyboard && !keyboard.isTutorModeActive()) {
                     keyboard.setInput(e.target.value);
                 }
@@ -215,4 +221,5 @@
         });
     </script>
 </body>
+
 </html>

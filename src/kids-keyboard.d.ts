@@ -45,11 +45,11 @@ declare module 'kids-keyboard' {
      */
     container: string | HTMLElement;
     
-    /** 
-     * Target input element or CSS selector for tutor mode
-     * @example '#text-input' or document.getElementById('input')
+    /**
+     * Target output element or CSS selector for tutor mode
+     * @example '#text-output' or document.getElementById('output')
      */
-    targetInput?: string | HTMLElement;
+    targetOutput?: string | HTMLElement;
     
     /** 
      * Tutor container element or CSS selector for mouse-based activation
@@ -146,10 +146,10 @@ declare module 'kids-keyboard' {
     isTutorModeActive(): boolean;
     
     /**
-     * Get the target input element
-     * @returns The target input element or null if not set
+     * Get the target output element
+     * @returns The target output element or null if not set
      */
-    getTargetInput(): HTMLElement | null;
+    getTargetOutput(): HTMLElement | null;
     
     /**
      * Destroy the keyboard instance and clean up resources
@@ -169,7 +169,7 @@ declare module 'kids-keyboard' {
    * 
    * const keyboard = createKidsKeyboard({
    *   container: '#keyboard-container',
-   *   targetInput: '#text-input',
+   *   targetOutput: '#text-output',
    *   debug: true,
    *   onChange: (input) => {
    *     console.log('Input changed:', input);
