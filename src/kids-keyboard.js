@@ -232,11 +232,11 @@ const safeCallback = (callback, ...args) => {
  */
 const createKeyElement = (key, defaultLayout, shiftLayout, rowIndex, keyIndex) => {
     const element = document.createElement('button');
-    element.className = 'keyboard-key';
+    element.className = 'kids-keyboard__key';
     element.dataset.key = key.toLowerCase();
     element.dataset.rowIndex = rowIndex;
     element.dataset.keyIndex = keyIndex;
-    
+
     // Add ARIA attributes for accessibility
     element.setAttribute('role', 'button');
     element.setAttribute('tabindex', '0');
@@ -249,11 +249,11 @@ const createKeyElement = (key, defaultLayout, shiftLayout, rowIndex, keyIndex) =
     // Create character display elements for efficient switching
     if (defaultChar !== shiftChar && key.length === 1) {
         const defaultSpan = document.createElement('span');
-        defaultSpan.className = 'key-char-default';
+        defaultSpan.className = 'kids-keyboard__key-char--default';
         defaultSpan.textContent = defaultChar;
 
         const shiftSpan = document.createElement('span');
-        shiftSpan.className = 'key-char-shift';
+        shiftSpan.className = 'kids-keyboard__key-char--shift';
         shiftSpan.textContent = shiftChar;
 
         element.appendChild(defaultSpan);
@@ -265,13 +265,13 @@ const createKeyElement = (key, defaultLayout, shiftLayout, rowIndex, keyIndex) =
 
     // Add special classes for different key types
     if (isModifierKey(key)) {
-        element.classList.add('modifier-key');
+        element.classList.add('kids-keyboard__key--modifier');
     } else if (key === 'Space') {
-        element.classList.add('space-key');
+        element.classList.add('kids-keyboard__key--space');
     } else if (key.length > 1) {
-        element.classList.add('function-key');
+        element.classList.add('kids-keyboard__key--function');
     } else {
-        element.classList.add('normal-key');
+        element.classList.add('kids-keyboard__key--normal');
     }
 
     return element;
@@ -296,7 +296,7 @@ const renderKeyboard = (container, state, keyElements, onKeyPress) => {
 
         defaultLayout.forEach((row, rowIndex) => {
             const rowElement = document.createElement('div');
-            rowElement.className = 'keyboard-row';
+            rowElement.className = 'kids-keyboard__row';
 
             row.forEach((key, keyIndex) => {
                 const keyElement = createKeyElement(key, defaultLayout, shiftLayout, rowIndex, keyIndex);
@@ -311,7 +311,7 @@ const renderKeyboard = (container, state, keyElements, onKeyPress) => {
 
         // Use event delegation for better performance
         const handleContainerClick = (e) => {
-            if (e.target.matches('.keyboard-key')) {
+            if (e.target.matches('.kids-keyboard__key')) {
                 e.preventDefault();
                 // Find the original key from the layout
                 const rowIndex = parseInt(e.target.dataset.rowIndex);
@@ -333,7 +333,7 @@ const renderKeyboard = (container, state, keyElements, onKeyPress) => {
  */
 const updateLayoutClass = (container, state) => {
     const shouldUseShift = state.isShiftPressed !== state.isCapsLockOn;
-    container.classList.toggle('shift-layout', shouldUseShift);
+    container.classList.toggle('kids-keyboard--shift-layout', shouldUseShift);
 };
 
 /**
@@ -345,18 +345,18 @@ const highlightKey = (keyElements, key, highlight) => {
     if (!element) return;
 
     // Remove all highlight classes first
-    element.classList.remove('highlighted', 'highlight-normal', 'highlight-modifier', 'highlight-function');
+    element.classList.remove('kids-keyboard__key--highlighted', 'kids-keyboard__key--highlight-normal', 'kids-keyboard__key--highlight-modifier', 'kids-keyboard__key--highlight-function');
 
     if (highlight) {
         // Add appropriate highlight class based on key type
         if (isModifierKey(key)) {
-            element.classList.add('highlight-modifier');
+            element.classList.add('kids-keyboard__key--highlight-modifier');
         } else if (key.length > 1 && key !== 'Space') {
-            element.classList.add('highlight-function');
+            element.classList.add('kids-keyboard__key--highlight-function');
         } else {
-            element.classList.add('highlight-normal');
+            element.classList.add('kids-keyboard__key--highlight-normal');
         }
-        element.classList.add('highlighted');
+        element.classList.add('kids-keyboard__key--highlighted');
     }
 };
 
@@ -365,16 +365,16 @@ const highlightKey = (keyElements, key, highlight) => {
  */
 const updateKeyStates = (keyElements, state) => {
     keyElements.forEach((element, key) => {
-        element.classList.remove('active-modifier', 'highlight-modifier');
+        element.classList.remove('kids-keyboard__key--active-modifier', 'kids-keyboard__key--highlight-modifier');
 
         if (key === 'ShiftLeft' && state.isLeftShiftPressed) {
-            element.classList.add('active-modifier');
+            element.classList.add('kids-keyboard__key--active-modifier');
         } else if (key === 'ShiftRight' && state.isRightShiftPressed) {
-            element.classList.add('active-modifier');
+            element.classList.add('kids-keyboard__key--active-modifier');
         } else if (key === 'CapsLock' && state.isCapsLockOn) {
-            element.classList.add('active-modifier', 'highlight-modifier', 'highlighted');
+            element.classList.add('kids-keyboard__key--active-modifier', 'kids-keyboard__key--highlight-modifier', 'kids-keyboard__key--highlighted');
         } else if (key === 'CapsLock' && !state.isCapsLockOn) {
-            element.classList.remove('highlighted');
+            element.classList.remove('kids-keyboard__key--highlighted');
         }
     });
 };
@@ -666,7 +666,7 @@ function createKidsKeyboard(options = {}) {
         
         // Add visual indicator to tutor container
         if (tutorContainer) {
-            tutorContainer.classList.add('tutor-mode-active');
+            tutorContainer.classList.add('kids-keyboard__tutor--active');
         }
         
         safeCallback(mergedOptions.onTutorModeChange, true);
@@ -683,7 +683,7 @@ function createKidsKeyboard(options = {}) {
         
         // Remove visual indicator from tutor container
         if (tutorContainer) {
-            tutorContainer.classList.remove('tutor-mode-active');
+            tutorContainer.classList.remove('kids-keyboard__tutor--active');
         }
         
         safeCallback(mergedOptions.onTutorModeChange, false);
