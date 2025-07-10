@@ -1,21 +1,48 @@
 # Kids Keyboard 🎯
 
-A lightweight, accessible virtual keyboard designed specifically for children's typing education. Built with modern web standards and optimized for educational environments.
+A progressive educational typing tutor designed for early childhood learning. Starting with pre-school children (ages 3-5) who have no knowledge of numbers or alphabet, and advancing through elementary grades with planned AI-powered personalized instruction.
 
 [![npm version](https://badge.fury.io/js/kids-keyboard.svg)](https://badge.fury.io/js/kids-keyboard)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-## Features
+## 🎯 Educational Philosophy
 
-- 🎯 **Education-Focused**: Designed specifically for children learning to type
-- 🖱️ **Mouse-Based Tutor Mode**: Intuitive hover activation for guided learning
-- ♿ **Accessibility First**: Full ARIA support and keyboard navigation
+Kids Keyboard follows a **progressive learning approach** based on early childhood development:
+
+### Target Progression
+1. **Pre-School (3-5)**: Letter recognition, phonetic sounds, cause-and-effect learning
+2. **Kindergarten (5-6)**: Letter-sound association, basic finger positioning
+3. **Elementary (6-8)**: Touch typing fundamentals, simple word building
+4. **Advanced (8+)**: AI-assisted personalized learning with verbal conversation
+
+### Learning Principles
+- **Multi-sensory**: Audio + Visual + Tactile feedback
+- **Inclusive**: Sign language integration, accessibility-first design
+- **Progressive**: Each phase builds on previous knowledge
+- **Engaging**: Gamification, animations, and positive reinforcement
+- **Evidence-based**: Following early childhood education research
+
+## Current Features (v0.9.0)
+
+### Core Functionality
+- 🎯 **Virtual Keyboard**: Clean, responsive keyboard with BEM CSS architecture
+- 🖱️ **Mouse-Based Tutor Mode**: Hover activation for guided learning
 - 📱 **Responsive Design**: Works on desktop, laptop, and tablet devices
-- ⚡ **High Performance**: Optimized rendering with minimal memory usage
-- 🎨 **Visual Feedback**: Clear indicators for physical keyboard synchronization
+- ⚡ **High Performance**: Minimal HTML, optimized rendering
 - 🔧 **Easy Integration**: Simple API with comprehensive TypeScript support
+
+### Educational Features (In Development)
+- 🔊 **Audio Feedback**: Phonetic pronunciation using Web Speech API
+- 📚 **Letter Associations**: Animal/object connections (A=Apple🍎, B=Bear🐻)
+- 👆 **Finger Positioning**: Visual guides for proper typing technique
+- 🤟 **Sign Language**: ASL alphabet integration for inclusive learning
+- 🎮 **Progressive Learning**: Age-appropriate content and difficulty
+
+### Technical Features
+- ♿ **Accessibility First**: Full ARIA support and keyboard navigation
 - 🎨 **BEM CSS Architecture**: Namespaced classes prevent styling conflicts
 - 📦 **No Build Required**: Works directly with modern bundlers like Vite
+- 🎨 **Visual Feedback**: Clear indicators for physical keyboard synchronization
 
 ## Quick Start
 
@@ -34,7 +61,7 @@ import 'kids-keyboard/src/kids-keyboard.css';
 
 const keyboard = createKidsKeyboard({
   container: '#kids-keyboard-input',
-  targetOutput: '#kids-keyboard-tutor-output',
+  targetOutput: '#kids-keyboard-text',
   onChange: (input) => {
     console.log('Input changed:', input);
   }
@@ -56,8 +83,13 @@ const keyboard = createKidsKeyboard({
 
 ```html
 <div id="kids-keyboard-tutor">
-  <textarea id="kids-keyboard-tutor-output"
-            placeholder="Hover over this area to activate tutor mode, then start typing!"></textarea>
+  <div id="kids-keyboard-output">
+    <textarea id="kids-keyboard-text"
+              placeholder="Hover over this area to activate tutor mode, then start typing!"></textarea>
+    <div id="kids-keyboard-display">
+      <!-- Key press details and educational content will appear here -->
+    </div>
+  </div>
   <div id="kids-keyboard-input"></div>
 </div>
 ```
@@ -116,12 +148,77 @@ Kids Keyboard features a unique **mouse-based tutor mode** that activates when u
 const keyboard = createKidsKeyboard({
   container: '#kids-keyboard-input',
   targetOutput: '#kids-keyboard-tutor-output',      // Output that receives tutor mode typing
-  tutorContainer: '#kids-keyboard-tutor', // Container that triggers tutor mode
+  tutorContainer: '#kids-keyboard-tutor',   // Container that triggers tutor mode
   onTutorModeChange: (isActive) => {
     console.log('Tutor mode:', isActive ? 'ON' : 'OFF');
   }
 });
 ```
+
+## 🗺️ Development Roadmap
+
+### Phase 1: Pre-School Foundation (Ages 3-5)
+**Target**: Children with no alphabet/number knowledge
+
+#### Phase 1A: Basic Audio System ⏳ *Next*
+- **Audio toggle** with persistent settings
+- **Phonetic sounds** for all letters (A says "ah")
+- **Web Speech API** integration (no audio files needed)
+- **Virtual keyboard clicks** trigger audio feedback
+
+#### Phase 1B: Key Information Display ⏳ *Planned*
+- **Large letter display** when keys are clicked
+- **Visual feedback** with animations and colors
+- **Simple information panel** showing letter and sound
+
+#### Phase 1C: Animal/Object Associations ⏳ *Planned*
+- **Memory aids**: A=Apple🍎, B=Bear🐻, C=Cat🐱
+- **Enhanced audio**: "A is for Apple" pronunciation
+- **Visual learning cards** with emoji associations
+
+### Phase 2: Kindergarten Skills (Ages 5-6)
+**Target**: Basic letter recognition, learning phonics
+
+#### Phase 2A: Finger Positioning Guide
+- **Hand position illustrations** showing correct fingers
+- **Kid-friendly finger names** ("Pointer Pete", "Middle Mike")
+- **Progressive learning** starting with home row
+
+#### Phase 2B: Sign Language Integration
+- **ASL alphabet** integration for inclusive learning
+- **Multi-modal learning** (audio + visual + sign)
+- **Cultural sensitivity** and accessibility focus
+
+### Phase 3: Elementary Skills (Ages 6-8)
+**Target**: Basic reading, number recognition
+
+#### Phase 3A: Simple Word Building
+- **Guided word formation** (CAT, DOG, SUN)
+- **Phonics integration** blending sounds into words
+- **Word recognition games** with progress tracking
+
+#### Phase 3B: Touch Typing Fundamentals
+- **Proper finger positioning** for all keys
+- **Typing speed tracking** age-appropriate goals
+- **Simple typing exercises** and mini-games
+
+### Phase 4: AI-Powered Learning (Ages 8+)
+**Target**: Personalized, adaptive instruction
+
+#### Phase 4A: Voice Conversation
+- **AI tutor integration** using OpenAI/Claude APIs
+- **Voice interaction** for natural conversation
+- **Child-safe guardrails** and parental controls
+
+#### Phase 4B: Adaptive Instruction
+- **Pattern recognition** analyzing typing behavior
+- **Personalized suggestions** based on individual progress
+- **Difficulty adjustment** matching child's skill level
+
+#### Phase 4C: Advanced Analytics
+- **Progress tracking** with detailed insights
+- **Parent/teacher reports** showing learning outcomes
+- **Learning gap identification** with targeted practice
 
 ## Styling
 
@@ -380,24 +477,69 @@ This library was inspired by [simple-keyboard](https://github.com/hodgef/simple-
 - **Optimized performance** and memory usage
 - **Built-in physical keyboard** integration
 
-## File Structure
+## Project Structure
 
 ```
 kids-keyboard/
 ├── src/
-│   ├── kids-keyboard.js     # Main JavaScript file (UMD format)
-│   ├── kids-keyboard.css    # Stylesheet with BEM classes
+│   ├── kids-keyboard.js     # Main JavaScript (UMD format, no build step)
+│   ├── kids-keyboard.css    # BEM-namespaced styles (alphabetized properties)
 │   └── kids-keyboard.d.ts   # TypeScript definitions
 ├── examples/
-│   └── stats.html           # Complete working example
-├── package.json             # NPM package configuration
+│   └── stats.html           # Working example with new layout structure
+├── _notes                   # Development roadmap and implementation plan
+├── package.json             # NPM package (points to src/, not dist/)
 ├── README.md               # This documentation
 └── LICENSE                 # MIT license
 ```
 
+### Current HTML Structure (Post-Refactoring)
+
+```html
+<div id="kids-keyboard-tutor">                    <!-- Main container -->
+  <div id="kids-keyboard-output">                 <!-- Upper section (flex) -->
+    <textarea id="kids-keyboard-text"></textarea> <!-- Left: typing output -->
+    <div id="kids-keyboard-display"></div>        <!-- Right: key details -->
+  </div>
+  <div id="kids-keyboard-input"></div>            <!-- Lower section: keyboard -->
+</div>
+```
+
+**Key Changes from v0.8:**
+- Simplified container names (removed `-container` suffixes)
+- Split output into text + display areas
+- Removed redundant BEM classes on unique IDs
+- Ready for educational content in display area
+
+## For AI Code Assistants 🤖
+
+### Current State (v0.9.0)
+- **Core keyboard functionality**: ✅ Complete and stable
+- **BEM CSS architecture**: ✅ Implemented with alphabetized properties
+- **Clean HTML output**: ✅ Minimal attributes, no bloat
+- **Educational features**: ⏳ In development (see roadmap above)
+
+### Next Implementation Priority
+1. **Phase 1A: Audio System** - Add Web Speech API for letter sounds
+2. **Phase 1B: Display Panel** - Show key information in `#kids-keyboard-display`
+3. **Phase 1C: Associations** - Add emoji-based letter associations
+
+### Code Patterns to Follow
+- **BEM naming**: `kids-keyboard__element--modifier`
+- **ID vs Class**: IDs for unique elements, classes for reusable components
+- **Progressive enhancement**: Each feature builds on previous
+- **Educational focus**: Target pre-school children first (ages 3-5)
+
+### Important Files to Understand
+- `_notes`: Complete development plan and educational philosophy
+- `src/kids-keyboard.js`: Main implementation (lines 233-271 for key creation)
+- `examples/stats.html`: Current working example with new structure
+- `src/kids-keyboard.css`: BEM styles (lines 315-357 for new layout)
+
 ## Changelog
 
 ### 0.9.0 (Current)
+- ✅ **Educational Focus**: Comprehensive roadmap for pre-school through elementary
 - ✅ **BEM CSS Architecture**: Namespaced classes prevent conflicts
 - ✅ **No Build Step**: Works directly with modern bundlers
 - ✅ **Mouse-based tutor mode**: Hover activation for guided learning
@@ -407,9 +549,17 @@ kids-keyboard/
 - ✅ **Performance optimizations**: Differential rendering, memory management
 - ✅ **Alphabetized CSS**: Organized properties for maintainability
 - ✅ **Minimal HTML**: Removed unnecessary attributes for cleaner output
+- ✅ **Simplified Structure**: Split output into text + display areas
 - 🔄 **BREAKING CHANGE**: Renamed `targetInput` → `targetOutput` for semantic clarity
 - 🔄 **BREAKING CHANGE**: Renamed `getTargetInput()` → `getTargetOutput()` method
-- 🔄 **BREAKING CHANGE**: Renamed HTML IDs from `*-input` → `*-output` for clarity
+- 🔄 **BREAKING CHANGE**: Simplified container IDs (removed `-container` suffixes)
+- 🔄 **BREAKING CHANGE**: New HTML structure with separate display area
+
+### 0.10.0 (Planned - Phase 1A)
+- 🎵 **Audio System**: Web Speech API integration for letter sounds
+- 🔊 **Audio Toggle**: Persistent on/off setting with visual indicator
+- 📚 **Phonetic Learning**: "A says 'ah'" pronunciation for all letters
+- 🎯 **Pre-School Ready**: First educational features for ages 3-5
 
 ## Migration Guide
 

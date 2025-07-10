@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kids Keyboard - Examples & Testing</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #4a5568;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #718096;
+            margin-bottom: 40px;
+            font-size: 1.2em;
+        }
+
+        .version {
+            background: #e2e8f0;
+            color: #4a5568;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            display: inline-block;
+            margin-left: 10px;
+        }
+
+        .examples-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+            margin-top: 40px;
+        }
+
+        .example-card {
+            background: #f7fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 24px;
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .example-card:hover {
+            border-color: #4299e1;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(66, 153, 225, 0.15);
+        }
+
+        .example-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #4299e1, #667eea);
+        }
+
+        .example-title {
+            font-size: 1.4em;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #2d3748;
+        }
+
+        .example-description {
+            color: #4a5568;
+            line-height: 1.6;
+            margin-bottom: 16px;
+        }
+
+        .example-status {
+            font-size: 0.9em;
+            padding: 4px 8px;
+            border-radius: 6px;
+            display: inline-block;
+        }
+
+        .status-stable {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+
+        .status-development {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+
+        .roadmap {
+            background: #edf2f7;
+            border-radius: 12px;
+            padding: 24px;
+            margin-top: 40px;
+        }
+
+        .roadmap h3 {
+            color: #2d3748;
+            margin-bottom: 16px;
+        }
+
+        .roadmap-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+            padding: 8px 0;
+        }
+
+        .roadmap-icon {
+            margin-right: 12px;
+            font-size: 1.2em;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            color: #718096;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 Kids Keyboard <span class="version">v0.9.0</span></h1>
+        <p class="subtitle">Educational Typing Tutor for Early Childhood Learning</p>
+
+        <div class="examples-grid">
+            <a href="stats.html" class="example-card">
+                <div class="example-title">📊 Statistics Demo</div>
+                <div class="example-description">
+                    Complete working example with character/word counting, tutor mode activation,
+                    and the new split-panel layout (text output + display area).
+                </div>
+                <span class="example-status status-stable">✅ Stable</span>
+            </a>
+
+            <a href="audio.html" class="example-card">
+                <div class="example-title">🎵 Audio Testing</div>
+                <div class="example-description">
+                    Testing ground for Phase 1A audio features: Web Speech API integration,
+                    phonetic sounds, and audio toggle functionality.
+                </div>
+                <span class="example-status status-development">🚧 In Development</span>
+            </a>
+        </div>
+
+        <div class="roadmap">
+            <h3>🗺️ Development Roadmap</h3>
+            <div class="roadmap-item">
+                <span class="roadmap-icon">🎵</span>
+                <strong>Phase 1A:</strong> Audio System - Letter sounds with Web Speech API
+            </div>
+            <div class="roadmap-item">
+                <span class="roadmap-icon">📚</span>
+                <strong>Phase 1B:</strong> Key Information Display - Large letters, phonetic info
+            </div>
+            <div class="roadmap-item">
+                <span class="roadmap-icon">🍎</span>
+                <strong>Phase 1C:</strong> Animal/Object Associations - A=Apple, B=Bear
+            </div>
+            <div class="roadmap-item">
+                <span class="roadmap-icon">👆</span>
+                <strong>Phase 2A:</strong> Finger Positioning - Visual typing guides
+            </div>
+            <div class="roadmap-item">
+                <span class="roadmap-icon">🤟</span>
+                <strong>Phase 2B:</strong> Sign Language - ASL alphabet integration
+            </div>
+            <div class="roadmap-item">
+                <span class="roadmap-icon">🤖</span>
+                <strong>Phase 4:</strong> AI Tutor - Personalized learning with conversation
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>🎯 <strong>Target:</strong> Pre-school (3-5) → Elementary (6-8) → AI-powered (8+)</p>
+            <p>Built with ❤️ for young learners everywhere</p>
+        </div>
+    </div>
+</body>
+</html>
