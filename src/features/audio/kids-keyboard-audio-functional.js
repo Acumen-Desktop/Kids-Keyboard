@@ -62,22 +62,66 @@ const checkAudioSupport = () => {
            'SpeechSynthesisUtterance' in window;
 };
 
-const selectOptimalVoice = (voices) => {
-    if (voices.length === 0) return null;
+const selectOptimalVoices = (voices) => {
+    if (voices.length === 0) return { primary: null, secondary: null };
 
-    // Fast lookup for preferred voices
+    // Find primary voice (fast, clear - same as PK)
+    let primaryVoice = null;
     for (const preferred of PREFERRED_VOICES) {
         const voice = voices.find(v => 
             v.name.includes(preferred) && v.lang.startsWith('en')
         );
-        if (voice) return voice;
+        if (voice) {
+            primaryVoice = voice;
+            break;
+        }
     }
 
-    // Fallback to first English female voice
-    return voices.find(v => 
-        v.lang.startsWith('en') && 
-        (v.name.toLowerCase().includes('female') || v.gender === 'female')
-    ) || voices.find(v => v.lang.startsWith('en')) || voices[0];
+    // Fallback for primary voice
+    if (!primaryVoice) {
+        primaryVoice = voices.find(v => 
+            v.lang.startsWith('en') && 
+            (v.name.toLowerCase().includes('female') || v.gender === 'female')
+        ) || voices.find(v => v.lang.startsWith('en')) || voices[0];
+    }
+
+    // Find secondary voice (different from primary, slower for phonetics)
+    const secondaryPreferences = [
+        'Daniel', 'David', 'Mark',           // Male voices for contrast
+        'Microsoft David', 'Google UK English Male',
+        'Alex', 'Bruce', 'Fred'             // Different character
+    ];
+
+    let secondaryVoice = null;
+    for (const preferred of secondaryPreferences) {
+        const voice = voices.find(v => 
+            v.name.includes(preferred) && 
+            v.lang.startsWith('en') &&
+            v.name !== primaryVoice?.name     // Must be different from primary
+        );
+        if (voice) {
+            secondaryVoice = voice;
+            break;
+        }
+    }
+
+    // Fallback for secondary: find any male voice different from primary
+    if (!secondaryVoice) {
+        secondaryVoice = voices.find(v => 
+            v.lang.startsWith('en') &&
+            v.name !== primaryVoice?.name &&
+            (v.name.toLowerCase().includes('male') || 
+             v.gender === 'male' ||
+             !v.name.toLowerCase().includes('female'))
+        );
+    }
+
+    // Final fallback: use primary voice for both if no alternative found
+    if (!secondaryVoice) {
+        secondaryVoice = primaryVoice;
+    }
+
+    return { primary: primaryVoice, secondary: secondaryVoice };
 };
 
 const isAudioLetterKey = (key) => key.length === 1 && /[a-z]/i.test(key);
@@ -99,7 +143,8 @@ const createOptimizedAudioState = (initialConfig = {}) => {
     };
     
     let voices = [];
-    let selectedVoice = null;
+    let primaryVoice = null;     // Fast voice (same as PK)
+    let secondaryVoice = null;   // Slower voice for phonetics
     let isInitialized = false;
     let lastSpeechTime = 0;
     let pendingTimeout = null;
@@ -115,9 +160,13 @@ const createOptimizedAudioState = (initialConfig = {}) => {
                 const settings = JSON.parse(saved);
                 config = { ...config, ...settings };
                 
-                if (settings.voiceName && voices.length > 0) {
-                    const voice = voices.find(v => v.name === settings.voiceName);
-                    if (voice) selectedVoice = voice;
+                if (settings.primaryVoiceName && voices.length > 0) {
+                    const voice = voices.find(v => v.name === settings.primaryVoiceName);
+                    if (voice) primaryVoice = voice;
+                }
+                if (settings.secondaryVoiceName && voices.length > 0) {
+                    const voice = voices.find(v => v.name === settings.secondaryVoiceName);
+                    if (voice) secondaryVoice = voice;
                 }
             }
         } catch (error) {
@@ -131,7 +180,8 @@ const createOptimizedAudioState = (initialConfig = {}) => {
         try {
             const settings = {
                 ...config,
-                voiceName: selectedVoice?.name || null
+                primaryVoiceName: primaryVoice?.name || null,
+                secondaryVoiceName: secondaryVoice?.name || null
             };
             localStorage.setItem('kids-keyboard-audio', JSON.stringify(settings));
         } catch (error) {
@@ -148,8 +198,14 @@ const createOptimizedAudioState = (initialConfig = {}) => {
                 const availableVoices = speechSynthesis.getVoices();
                 if (availableVoices.length > 0) {
                     voices = availableVoices;
-                    selectedVoice = selectOptimalVoice(voices);
+                    const voiceSelection = selectOptimalVoices(voices);
+                    primaryVoice = voiceSelection.primary;
+                    secondaryVoice = voiceSelection.secondary;
                     isInitialized = true;
+                    
+                    console.log('🎵 Primary voice (fast):', primaryVoice?.name);
+                    console.log('🎵 Secondary voice (phonetics):', secondaryVoice?.name);
+                    
                     resolve(true);
                 }
             };
@@ -175,7 +231,9 @@ const createOptimizedAudioState = (initialConfig = {}) => {
         // Getters
         getConfig: () => ({ ...config }),
         getVoices: () => voices,
-        getSelectedVoice: () => selectedVoice,
+        getPrimaryVoice: () => primaryVoice,
+        getSecondaryVoice: () => secondaryVoice,
+        getSelectedVoice: () => primaryVoice, // Legacy compatibility
         isSupported: () => isSupported,
         isInitialized: () => isInitialized,
         getLastSpeechTime: () => lastSpeechTime,
@@ -186,8 +244,16 @@ const createOptimizedAudioState = (initialConfig = {}) => {
             config = { ...config, ...newConfig };
             saveSettings();
         },
+        setPrimaryVoice: (voice) => {
+            primaryVoice = voice;
+            saveSettings();
+        },
+        setSecondaryVoice: (voice) => {
+            secondaryVoice = voice;
+            saveSettings();
+        },
         setSelectedVoice: (voice) => {
-            selectedVoice = voice;
+            primaryVoice = voice; // Legacy compatibility
             saveSettings();
         },
         setLastSpeechTime: (time) => { lastSpeechTime = time; },
@@ -215,7 +281,7 @@ const createOptimizedAudioState = (initialConfig = {}) => {
 
 const createOptimizedSpeechEngine = (audioState) => {
     
-    const executeSpeech = (text, timestamp) => {
+    const executeSpeech = (text, timestamp, voiceType = 'primary', rate = null, pitch = null) => {
         audioState.setLastSpeechTime(timestamp);
 
         // Quick cancellation of any ongoing speech
@@ -227,14 +293,18 @@ const createOptimizedSpeechEngine = (audioState) => {
         
         // Apply configuration
         const config = audioState.getConfig();
-        utterance.rate = config.rate;
-        utterance.pitch = config.pitch;
+        utterance.rate = rate !== null ? rate : config.rate;
+        utterance.pitch = pitch !== null ? pitch : config.pitch;
         utterance.volume = config.volume;
         utterance.lang = config.language;
 
-        const selectedVoice = audioState.getSelectedVoice();
-        if (selectedVoice) {
-            utterance.voice = selectedVoice;
+        // Select voice based on type
+        const voice = voiceType === 'secondary' ? 
+            audioState.getSecondaryVoice() : 
+            audioState.getPrimaryVoice();
+        
+        if (voice) {
+            utterance.voice = voice;
         }
 
         // Minimal error handling
@@ -244,6 +314,62 @@ const createOptimizedSpeechEngine = (audioState) => {
             speechSynthesis.speak(utterance);
         } catch (error) {
             console.error('Speech failed:', error);
+        }
+    };
+
+    const executeDualSpeech = (primaryText, secondaryText, timestamp) => {
+        audioState.setLastSpeechTime(timestamp);
+
+        // Quick cancellation of any ongoing speech
+        if (speechSynthesis.speaking) {
+            speechSynthesis.cancel();
+        }
+
+        const config = audioState.getConfig();
+
+        // First utterance: Primary voice (fast, same as PK)
+        const utterance1 = new SpeechSynthesisUtterance(primaryText);
+        utterance1.rate = config.rate;  // Fast rate (2.0)
+        utterance1.pitch = config.pitch;
+        utterance1.volume = config.volume;
+        utterance1.lang = config.language;
+        
+        const primaryVoice = audioState.getPrimaryVoice();
+        if (primaryVoice) {
+            utterance1.voice = primaryVoice;
+        }
+
+        // Second utterance: Secondary voice (slower, different voice)
+        const utterance2 = new SpeechSynthesisUtterance(secondaryText);
+        utterance2.rate = Math.max(0.6, config.rate - 0.8); // Slower (1.2 if config is 2.0)
+        utterance2.pitch = config.pitch - 0.2; // Slightly lower pitch for contrast
+        utterance2.volume = config.volume;
+        utterance2.lang = config.language;
+        
+        const secondaryVoice = audioState.getSecondaryVoice();
+        if (secondaryVoice) {
+            utterance2.voice = secondaryVoice;
+        }
+
+        // Minimal error handling
+        utterance1.onerror = () => speechSynthesis.cancel();
+        utterance2.onerror = () => speechSynthesis.cancel();
+
+        try {
+            // Speak first utterance
+            speechSynthesis.speak(utterance1);
+            
+            // Add slight pause then speak second utterance
+            utterance1.onend = () => {
+                setTimeout(() => {
+                    if (!speechSynthesis.speaking) { // Only if not cancelled
+                        speechSynthesis.speak(utterance2);
+                    }
+                }, 300); // 300ms pause between voices
+            };
+            
+        } catch (error) {
+            console.error('Dual speech failed:', error);
         }
     };
 
@@ -258,7 +384,7 @@ const createOptimizedSpeechEngine = (audioState) => {
         }
     };
 
-    const speak = (text) => {
+    const speak = (text, voiceType = 'primary') => {
         if (!audioState.isSupported() || !audioState.getConfig().enabled || !text) {
             return;
         }
@@ -271,12 +397,37 @@ const createOptimizedSpeechEngine = (audioState) => {
 
         // Fast path: if enough time has passed, speak immediately
         if (timeSinceLastSpeech >= AUDIO_CONFIG.DEBOUNCE_INTERVAL) {
-            executeSpeech(text, now);
+            executeSpeech(text, now, voiceType);
         } else {
             // Debounce: schedule for later
             const delay = AUDIO_CONFIG.DEBOUNCE_INTERVAL - timeSinceLastSpeech;
             const timeout = setTimeout(() => {
-                executeSpeech(text, performance.now());
+                executeSpeech(text, performance.now(), voiceType);
+                audioState.setPendingTimeout(null);
+            }, delay);
+            audioState.setPendingTimeout(timeout);
+        }
+    };
+
+    const speakDual = (primaryText, secondaryText) => {
+        if (!audioState.isSupported() || !audioState.getConfig().enabled || !primaryText) {
+            return;
+        }
+
+        const now = performance.now();
+        const timeSinceLastSpeech = now - audioState.getLastSpeechTime();
+
+        // Clear any pending speech
+        cancelPendingSpeech();
+
+        // Fast path: if enough time has passed, speak immediately
+        if (timeSinceLastSpeech >= AUDIO_CONFIG.DEBOUNCE_INTERVAL) {
+            executeDualSpeech(primaryText, secondaryText, now);
+        } else {
+            // Debounce: schedule for later
+            const delay = AUDIO_CONFIG.DEBOUNCE_INTERVAL - timeSinceLastSpeech;
+            const timeout = setTimeout(() => {
+                executeDualSpeech(primaryText, secondaryText, performance.now());
                 audioState.setPendingTimeout(null);
             }, delay);
             audioState.setPendingTimeout(timeout);
@@ -285,6 +436,7 @@ const createOptimizedSpeechEngine = (audioState) => {
 
     return {
         speak,
+        speakDual,
         cancelPendingSpeech,
         destroy: cancelPendingSpeech
     };
@@ -317,14 +469,16 @@ const playVirtualKeySound = (key, speechEngine, audioState) => {
     const lowerKey = key.toLowerCase();
 
     if (isAudioLetterKey(lowerKey)) {
+        // Dual voice approach: Fast letter (same as PK) + slower phonetic sound
+        const letterName = lowerKey; // Use lowercase to match PK exactly
         const phoneticSound = PHONETIC_SOUNDS[lowerKey];
-        const text = `Letter ${key.toUpperCase()}. ${key.toUpperCase()} says ${phoneticSound}`;
-        speechEngine.speak(text);
+        
+        speechEngine.speakDual(letterName, phoneticSound);
     } else if (isAudioNumberKey(lowerKey)) {
-        const numberWord = NUMBER_SOUNDS[lowerKey];
-        const text = `Number ${lowerKey}. ${lowerKey} is ${numberWord}`;
-        speechEngine.speak(text);
+        // Single voice for numbers (same as PK) - phonetic isn't different enough to warrant dual voice
+        speechEngine.speak(lowerKey);
     } else {
+        // Function keys: single voice (same as PK)
         const functionSound = FUNCTION_KEY_SOUNDS[lowerKey];
         if (functionSound) {
             speechEngine.speak(functionSound);
@@ -407,13 +561,17 @@ const createKidsKeyboardAudio = async (options = {}) => {
         // Getters
         getConfig: () => audioState.getConfig(),
         getVoices: () => audioState.getVoices(),
-        getSelectedVoice: () => audioState.getSelectedVoice(),
+        getPrimaryVoice: () => audioState.getPrimaryVoice(),
+        getSecondaryVoice: () => audioState.getSecondaryVoice(),
+        getSelectedVoice: () => audioState.getSelectedVoice(), // Legacy
         getStatus: () => ({
             supported: audioState.isSupported(),
             initialized: audioState.isInitialized(),
             enabled: audioState.getConfig().enabled,
             voicesAvailable: audioState.getVoices().length,
-            selectedVoice: audioState.getSelectedVoice()?.name || 'None'
+            primaryVoice: audioState.getPrimaryVoice()?.name || 'None',
+            secondaryVoice: audioState.getSecondaryVoice()?.name || 'None',
+            selectedVoice: audioState.getPrimaryVoice()?.name || 'None' // Legacy
         }),
         
         isSupported: () => audioState.isSupported(),

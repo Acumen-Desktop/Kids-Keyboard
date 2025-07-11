@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kids Keyboard - Functional Audio Test</title>
+    <title>Kids Keyboard - Audio System</title>
     <link rel="stylesheet" href="../src/kids-keyboard.css">
     <style>
         body {
@@ -113,19 +113,70 @@
             border-color: #a5d6a7;
             color: #2e7d32;
         }
+
+        /* Debug panel (collapsible) */
+        .debug-panel {
+            background: #f1f3f4;
+            border: 1px solid #dadce0;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .debug-header {
+            align-items: center;
+            background: #e8eaed;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 15px;
+            user-select: none;
+        }
+
+        .debug-content {
+            display: none;
+            font-family: monospace;
+            font-size: 12px;
+            padding: 15px;
+        }
+
+        .debug-content.open {
+            display: block;
+        }
+
+        .debug-stats {
+            display: grid;
+            gap: 10px;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            margin-bottom: 15px;
+        }
+
+        .debug-stat {
+            background: white;
+            border-radius: 4px;
+            padding: 8px;
+            text-align: center;
+        }
+
+        /* Visual feedback for clicked keys */
+        .kids-keyboard__key--clicked {
+            background: #ff9800 !important;
+            transform: scale(0.95);
+            transition: all 0.1s ease;
+        }
     </style>
 </head>
 
 <body>
     <div id="app-container">
-        <h1>🎵 Kids Keyboard - Functional Audio Test</h1>
+        <h1>🎵 Kids Keyboard - Audio System</h1>
 
         <div id="audio-status" class="status-indicator">
-            🔄 Initializing functional audio system...
+            🔄 Initializing dual-voice audio system...
         </div>
 
         <div class="audio-controls">
-            <h3>🔊 Audio Settings (Functional Version)</h3>
+            <h3>🔊 Audio Settings</h3>
 
             <div class="control-group">
                 <label>Audio:</label>
@@ -145,19 +196,52 @@
             </div>
 
             <div id="audio-feedback" class="audio-feedback">
-                💡 Functional audio system with closure-based state management!
+                💡 Dual-voice system: Letters use two voices (fast + phonetic), numbers use single voice
+            </div>
+        </div>
+
+        <!-- Debug Panel -->
+        <div class="debug-panel">
+            <div class="debug-header" onclick="toggleDebugPanel()">
+                <span>🔧 Debug Info</span>
+                <span id="debug-toggle">▼</span>
+            </div>
+            <div id="debug-content" class="debug-content">
+                <div class="debug-stats">
+                    <div class="debug-stat">
+                        <div>Total Clicks</div>
+                        <div id="total-clicks">0</div>
+                    </div>
+                    <div class="debug-stat">
+                        <div>Successful</div>
+                        <div id="successful-clicks">0</div>
+                    </div>
+                    <div class="debug-stat">
+                        <div>Last Key</div>
+                        <div id="last-key">None</div>
+                    </div>
+                    <div class="debug-stat">
+                        <div>Voices</div>
+                        <div id="voice-count">0</div>
+                    </div>
+                </div>
+                <div>
+                    <strong>Primary Voice:</strong> <span id="primary-voice">Loading...</span><br>
+                    <strong>Secondary Voice:</strong> <span id="secondary-voice">Loading...</span><br>
+                    <strong>Click Handler:</strong> <span id="click-status">Unknown</span>
+                </div>
             </div>
         </div>
 
         <div id="kids-keyboard-tutor">
             <div id="kids-keyboard-output">
                 <textarea id="kids-keyboard-text"
-                          placeholder="Test the functional audio system - try both mouse clicks and keyboard typing!"></textarea>
+                          placeholder="Hover to activate tutor mode. Try both physical keyboard and mouse clicks!"></textarea>
                 <div id="kids-keyboard-display">
                     <div style="text-align: center; color: #666; padding: 20px;">
-                        🎯 Functional Audio Test
+                        🎯 Click virtual keys to test dual-voice audio
                         <br><br>
-                        <small>Testing closure-based audio optimization</small>
+                        <small>Letters: fast + phonetic | Numbers: single voice</small>
                     </div>
                 </div>
             </div>
@@ -165,20 +249,62 @@
         </div>
     </div>
 
-    <!-- Load ONLY the functional versions -->
+    <!-- Load optimized versions with fixes -->
     <script src="../src/kids-keyboard.js"></script>
+    <script src="../src/performance/kids-keyboard-click-patch.js"></script>
     <script src="../src/performance/kids-keyboard-audio-functional.js"></script>
     <script>
-        console.log('🎵 Functional Audio System Test');
+        console.log('🎵 Kids Keyboard Audio System - Final Version');
 
         let audioSystem = null;
+        let keyboard = null;
 
-        // Update audio status display (define first)
+        // Debug state
+        let totalClicks = 0;
+        let successfulClicks = 0;
+        let lastKey = 'None';
+
+        // Update debug info
+        const updateDebugInfo = () => {
+            document.getElementById('total-clicks').textContent = totalClicks;
+            document.getElementById('successful-clicks').textContent = successfulClicks;
+            document.getElementById('last-key').textContent = lastKey;
+            
+            if (audioSystem) {
+                const status = audioSystem.getStatus();
+                document.getElementById('voice-count').textContent = status.voicesAvailable;
+                document.getElementById('primary-voice').textContent = status.primaryVoice;
+                document.getElementById('secondary-voice').textContent = status.secondaryVoice;
+            }
+            
+            if (keyboard && keyboard.getClickDebugInfo) {
+                const clickInfo = keyboard.getClickDebugInfo();
+                document.getElementById('click-status').textContent = 
+                    `${clickInfo.handlerAttached ? 'Active' : 'Inactive'} (${clickInfo.clickCount})`;
+            }
+        };
+
+        // Toggle debug panel
+        window.toggleDebugPanel = () => {
+            const content = document.getElementById('debug-content');
+            const toggle = document.getElementById('debug-toggle');
+            
+            if (content.classList.contains('open')) {
+                content.classList.remove('open');
+                toggle.textContent = '▼';
+            } else {
+                content.classList.add('open');
+                toggle.textContent = '▲';
+                updateDebugInfo();
+            }
+        };
+
+        // Update audio status display
         const updateAudioStatus = (success = true) => {
             const statusEl = document.getElementById('audio-status');
 
             if (!success || !audioSystem) {
-                statusEl.innerHTML = '❌ Functional audio system failed to initialize';
+                statusEl.innerHTML = '❌ Audio system failed to initialize';
                 statusEl.className = 'status-indicator error';
                 return;
             }
@@ -186,10 +312,12 @@
             const status = audioSystem.getStatus();
 
             if (status.supported && status.initialized) {
-                statusEl.innerHTML = `✅ Functional audio ready! ${status.voicesAvailable} voices available. Selected: ${status.selectedVoice}`;
+                statusEl.innerHTML = `✅ Dual-voice system ready! ${status.voicesAvailable} voices available.<br>
+                    🎯 Primary (fast): ${status.primaryVoice}<br>
+                    🔊 Secondary (phonetics): ${status.secondaryVoice}`;
                 statusEl.className = 'status-indicator ready';
             } else if (status.supported) {
-                statusEl.innerHTML = '🔄 Loading voices (functional)...';
+                statusEl.innerHTML = '🔄 Loading voices...';
                 statusEl.className = 'status-indicator';
             } else {
                 statusEl.innerHTML = '❌ Web Speech API not supported in this browser';
@@ -197,7 +325,7 @@
             }
         };
 
-        // Initialize functional audio system
+        // Initialize audio system
         const initializeAudio = async () => {
             try {
                 console.log('🔧 Creating functional audio system...');
@@ -207,50 +335,57 @@
                     pitch: 1.1
                 });
 
-                console.log('✅ Functional audio system initialized:', audioSystem.getStatus());
+                console.log('✅ Audio system initialized:', audioSystem.getStatus());
                 updateAudioStatus();
                 setupAudioControls();
 
             } catch (error) {
-                console.error('❌ Failed to initialize functional audio:', error);
+                console.error('❌ Failed to initialize audio:', error);
                 updateAudioStatus(false);
             }
         };
 
-        // Initialize keyboard with functional audio integration
-        const keyboard = createKidsKeyboard({
-            container: '#kids-keyboard-input',
-            targetOutput: '#kids-keyboard-text',
-            tutorContainer: '#kids-keyboard-tutor',
-            debug: true,
+        // Initialize keyboard with audio integration
+        const initializeKeyboard = () => {
+            keyboard = createKidsKeyboard({
+                container: '#kids-keyboard-input',
+                targetOutput: '#kids-keyboard-text',
+                tutorContainer: '#kids-keyboard-tutor',
+                debug: false, // Set to true for detailed logging
 
-            onKeyPress: (key, event, inputSource) => {
-                console.log('🎹 Key pressed:', key, 'from', inputSource);
+                onKeyPress: (key, event, inputSource) => {
+                    totalClicks++;
+                    successfulClicks++;
+                    lastKey = key;
+                    
+                    console.log('🎹 Key pressed:', key, 'from', inputSource);
 
-                // Use functional audio system
-                if (audioSystem) {
-                    if (inputSource === 'physical') {
-                        // Physical keyboard: fast, simple audio
-                        audioSystem.playPhysicalKeySound(key);
-                    } else if (inputSource === 'virtual') {
-                        // Virtual keyboard: detailed, educational audio
-                        audioSystem.playVirtualKeySound(key);
-                    } else {
-                        // Fallback
-                        audioSystem.playKeySound(key);
+                    // Use functional audio system
+                    if (audioSystem) {
+                        if (inputSource === 'physical') {
+                            // Physical keyboard: fast, simple audio
+                            audioSystem.playPhysicalKeySound(key);
+                        } else if (inputSource === 'virtual') {
+                            // Virtual keyboard: dual-voice for letters, single for numbers
+                            audioSystem.playVirtualKeySound(key);
+                        } else {
+                            // Fallback
+                            audioSystem.playKeySound(key);
+                        }
                     }
+
+                    // Update display
+                    updateKeyDisplay(key, inputSource);
+                    updateDebugInfo();
+                },
+
+                onTutorModeChange: (isActive) => {
+                    console.log('🎯 Tutor mode:', isActive ? 'ON' : 'OFF');
                 }
+            });
+        };
 
-                // Update display
-                updateKeyDisplay(key, inputSource);
-            },
-
-            onTutorModeChange: (isActive) => {
-                console.log('🎯 Tutor mode:', isActive ? 'ON' : 'OFF');
-            }
-        });
-
-        // Setup audio controls (called after audio system is initialized)
+        // Setup audio controls
         const setupAudioControls = () => {
             const audioToggle = document.getElementById('audio-toggle');
             const speechRate = document.getElementById('speech-rate');
@@ -311,26 +446,28 @@
                 content += `<div style="font-size: 18px; margin: 10px 0;">Letter: <strong>${keyUpper}</strong></div>`;
 
                 if (inputSource === 'physical') {
-                    content += `<div style="font-size: 16px; color: #666;">🔊 Functional PK: "${key.toLowerCase()}"</div>`;
-                    feedback.textContent = `⌨️ Functional Physical: "${key.toLowerCase()}"`;
+                    content += `<div style="font-size: 16px; color: #666;">🔊 Single voice: "${key.toLowerCase()}"</div>`;
+                    feedback.textContent = `⌨️ Physical: "${key.toLowerCase()}"`;
                 } else if (inputSource === 'virtual') {
-                    content += `<div style="font-size: 16px; color: #666;">🔊 Functional VK: "Letter ${keyUpper}. ${keyUpper} says ${getPhoneticSound(key)}"</div>`;
-                    feedback.textContent = `🖱️ Functional Virtual: "Letter ${keyUpper}. ${keyUpper} says ${getPhoneticSound(key)}"`;
+                    content += `<div style="font-size: 16px; color: #666;">🔊 Dual voice: "${key.toLowerCase()}" then "${getPhoneticSound(key)}"</div>`;
+                    content += `<div style="font-size: 14px; color: #888; margin-top: 5px;">🎯 Primary voice + 🔊 Secondary voice</div>`;
+                    feedback.textContent = `🖱️ Dual voice: "${key.toLowerCase()}" then "${getPhoneticSound(key)}"`;
                 }
             } else if (key.length === 1 && /[0-9]/.test(key)) {
                 content += `<div style="font-size: 18px; margin: 10px 0;">Number: <strong>${key}</strong></div>`;
 
                 if (inputSource === 'physical') {
-                    content += `<div style="font-size: 16px; color: #666;">🔊 Functional PK: "${key}"</div>`;
-                    feedback.textContent = `⌨️ Functional Physical: "${key}"`;
+                    content += `<div style="font-size: 16px; color: #666;">🔊 Single voice: "${key}"</div>`;
+                    feedback.textContent = `⌨️ Physical: "${key}"`;
                 } else if (inputSource === 'virtual') {
-                    content += `<div style="font-size: 16px; color: #666;">🔊 Functional VK: "Number ${key}. ${key} is ${getNumberWord(key)}"</div>`;
-                    feedback.textContent = `🖱️ Functional Virtual: "Number ${key}. ${key} is ${getNumberWord(key)}"`;
+                    content += `<div style="font-size: 16px; color: #666;">🔊 Single voice: "${key}" (same as physical)</div>`;
+                    content += `<div style="font-size: 14px; color: #888; margin-top: 5px;">🎯 No dual voice needed for numbers</div>`;
+                    feedback.textContent = `🖱️ Virtual: "${key}" (same as physical)`;
                 }
             } else {
                 content += `<div style="font-size: 18px; margin: 10px 0;">Key: <strong>${keyUpper}</strong></div>`;
-                content += `<div style="font-size: 16px; color: #666;">🔊 Functional function key</div>`;
-                feedback.textContent = `🎵 Functional: ${keyUpper} function key`;
+                content += `<div style="font-size: 16px; color: #666;">🔊 Function key</div>`;
+                feedback.textContent = `🎵 Function: ${keyUpper}`;
             }
 
             content += `</div>`;
@@ -342,7 +479,7 @@
             // Reset feedback after a delay
             setTimeout(() => {
                 feedback.className = 'audio-feedback';
-                feedback.textContent = '💡 Functional closure-based audio system working!';
+                feedback.textContent = '💡 Dual-voice system: Letters use two voices (fast + phonetic), numbers use single voice';
             }, 3000);
         }
 
@@ -358,18 +495,16 @@
             return sounds[letter.toLowerCase()] || letter;
         }
 
-        function getNumberWord(number) {
-            const words = {
-                '0': 'zero', '1': 'one', '2': 'two', '3': 'three', '4': 'four',
-                '5': 'five', '6': 'six', '7': 'seven', '8': 'eight', '9': 'nine'
-            };
-            return words[number] || number;
-        }
-
-        // Initialize on page load
-        document.addEventListener('DOMContentLoaded', function () {
-            initializeAudio();
-            console.log('🎯 Test the functional audio system by typing or clicking keys!');
+        // Initialize everything
+        document.addEventListener('DOMContentLoaded', async function () {
+            console.log('🔄 Initializing Kids Keyboard Audio System...');
+            
+            // Initialize in sequence
+            await initializeAudio();
+            initializeKeyboard();
+            
+            console.log('✅ Kids Keyboard Audio System ready!');
+            updateDebugInfo();
         });
     </script>
 </body>

@@ -74,7 +74,12 @@
   transform: translateY(-1px);
 }
 
+/* Focus handling - prevent persistent blue highlights on mouse clicks */
 .kids-keyboard__key:focus {
+  outline: none; /* Remove default focus outline for mouse interactions */
+}
+
+.kids-keyboard__key:focus-visible {
   outline: 2px solid #2196F3;
   outline-offset: 2px;
 }
