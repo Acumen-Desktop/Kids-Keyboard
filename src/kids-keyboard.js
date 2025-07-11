@@ -306,9 +306,7 @@ const renderKeyboard = (container, state, keyElements, onKeyPress) => {
         const handleContainerClick = (e) => {
             if (e.target.matches('.kids-keyboard__key')) {
                 e.preventDefault();
-                // Get the key directly from the data attribute and convert back to original case
                 const keyName = e.target.dataset.key;
-                // Convert back to original key format (handle special cases)
                 let originalKey = keyName;
                 if (keyName === 'shiftleft') originalKey = 'ShiftLeft';
                 else if (keyName === 'shiftright') originalKey = 'ShiftRight';
@@ -318,11 +316,42 @@ const renderKeyboard = (container, state, keyElements, onKeyPress) => {
                 else if (keyName === 'space') originalKey = 'Space';
                 else if (keyName === 'tab') originalKey = 'Tab';
 
-                safeCallback(onKeyPress, originalKey, e, 'virtual');
+                // Dispatch a custom event instead of directly calling the callback
+                const event = new CustomEvent('virtualkeypress', { 
+                    bubbles: true, 
+                    cancelable: true, 
+                    detail: { key: originalKey, event: e }
+                });
+                container.dispatchEvent(event);
             }
         };
         
-        container.addEventListener('click', handleContainerClick);
+        const handleContainerMouseDown = (e) => {
+            const keyElement = e.target.closest('.kids-keyboard__key');
+            if (keyElement) {
+                keyElement.style.transform = 'scale(0.95)';
+            }
+        };
+
+        const handleContainerMouseUpOrOut = (e) => {
+            const keyElement = e.target.closest('.kids-keyboard__key');
+            if (keyElement) {
+                keyElement.style.transform = '';
+                keyElement.blur(); // Remove focus to prevent sticky state
+            }
+        };
+        
+        container.addEventListener('mousedown', handleContainerMouseDown);
+        container.addEventListener('mouseup', handleContainerMouseUpOrOut);
+        container.addEventListener('mouseout', handleContainerMouseUpOrOut);
+
+        // Use event delegation with capture for better performance and reliability
+        container.addEventListener('click', handleContainerClick, { capture: true });
+
+        container.addEventListener('virtualkeypress', (e) => {
+            const { key, event } = e.detail;
+            safeCallback(onKeyPress, key, event, 'virtual');
+        });
     }
 
     // Update layout class for CSS-based switching
