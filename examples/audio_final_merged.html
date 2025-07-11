@@ -154,9 +154,15 @@
                     }
                 });
 
-                document.getElementById('test-audio').addEventListener('click', () => {
+                document.getElementById('test-audio-primary').addEventListener('click', () => {
                     if (audioSystem) {
                         audioSystem.test();
+                    }
+                });
+
+                document.getElementById('test-audio-secondary').addEventListener('click', () => {
+                    if (audioSystem) {
+                        audioSystem.testSecondary();
                     }
                 });
 

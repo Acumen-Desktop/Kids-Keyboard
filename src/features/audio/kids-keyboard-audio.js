@@ -512,6 +512,7 @@ const createKidsKeyboardAudio = async (options = {}) => {
         
         speak: (text) => speechEngine.speak(text),
         test: () => speechEngine.speak('Hello! This is the Kids Keyboard audio system.'),
+        testSecondary: () => speechEngine.speak('This is the secondary voice.', 'secondary'),
         
         getConfig: () => audioState.getConfig(),
         getVoices: () => audioState.getVoices(),
