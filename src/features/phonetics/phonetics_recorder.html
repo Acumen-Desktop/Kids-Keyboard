@@ -105,6 +105,13 @@
             border: 1px solid #ccc;
             cursor: grab;
         }
+
+        #playhead-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+        }
     </style>
 </head>
 <body>
@@ -118,6 +125,7 @@
                 <tr>
                     <th>Letter</th>
                     <th>Phonetic Hint</th>
+                    <th>Word Hint</th>
                     <th>Controls</th>
                     <th>Status</th>
                 </tr>
@@ -131,7 +139,10 @@
         <div id="edit-modal" style="display: none;">
             <div id="edit-modal-content">
                 <h2>Edit Recording</h2>
-                <canvas id="waveform-canvas" width="700" height="150"></canvas>
+                <div id="waveform-container" style="position: relative;">
+                    <canvas id="waveform-canvas" width="700" height="150"></canvas>
+                    <canvas id="playhead-canvas" width="700" height="150" style="position: absolute; top: 0; left: 0; pointer-events: none;"></canvas>
+                </div>
                 <div>
                     <button id="play-trim-btn">Play Trimmed</button>
                     <button id="save-trim-btn">Save Trimmed Audio</button>
@@ -150,6 +161,13 @@
                 'p': 'puh', 'q': 'kwuh', 'r': 'ruh', 's': 'suh', 't': 'tuh',
                 'u': 'uh', 'v': 'vuh', 'w': 'wuh', 'x': 'ksuh', 'y': 'yuh', 'z': 'zuh'
             };
+            const WORD_HINTS = {
+                'a': 'apple', 'b': 'ball', 'c': 'cat', 'd': 'dog', 'e': 'egg',
+                'f': 'fish', 'g': 'goat', 'h': 'hat', 'i': 'igloo', 'j': 'jam',
+                'k': 'kite', 'l': 'lion', 'm': 'mouse', 'n': 'nest', 'o': 'octopus',
+                'p': 'pig', 'q': 'queen', 'r': 'ring', 's': 'sun', 't': 'turtle',
+                'u': 'umbrella', 'v': 'vase', 'w': 'watch', 'x': 'box', 'y': 'yarn', 'z': 'zebra'
+            };
             const ALPHABET = 'abcdefghijklmnopqrstuvwxyz'.split('');
             const tableBody = document.getElementById('recorder-table-body');
 
@@ -165,6 +183,7 @@
                         <tr data-letter="${letter}">
                             <td class="letter">${letter.toUpperCase()}</td>
                             <td class="phonetic-hint">"${PHONETIC_SOUNDS[letter]}"</td>
+                            <td class="word-hint">${WORD_HINTS[letter]}</td>
                             <td>
                                 <button class="record-btn" data-action="record">Record</button>
                                 <button class="play-btn" data-action="play" disabled>Play</button>
@@ -334,10 +353,12 @@
             // --- Editing Logic ---
             const editModal = document.getElementById('edit-modal');
             const waveformCanvas = document.getElementById('waveform-canvas');
+            const playheadCanvas = document.getElementById('playhead-canvas');
             const saveTrimBtn = document.getElementById('save-trim-btn');
             const cancelEditBtn = document.getElementById('cancel-edit-btn');
             const playTrimBtn = document.getElementById('play-trim-btn');
             const canvasCtx = waveformCanvas.getContext('2d');
+            const playheadCtx = playheadCanvas.getContext('2d');
             let currentAudioBuffer = null;
             let currentLetter = null;
             let trimStart = 0;
@@ -352,6 +373,8 @@
                         const response = await fetch(base64String);
                         const arrayBuffer = await response.arrayBuffer();
                         currentAudioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+                        trimStart = 0;
+                        trimEnd = 1;
                         drawWaveform(currentAudioBuffer);
                         editModal.style.display = 'flex';
                     }
@@ -374,13 +397,20 @@
                 for (let i = 0; i < width; i++) {
                     let min = 1.0;
                     let max = -1.0;
+                    let samplesFound = false;
                     for (let j = 0; j < step; j++) {
-                        const datum = data[(i * step) + j];
-                        if (datum < min) min = datum;
-                        if (datum > max) max = datum;
+                        const dataIndex = (i * step) + j;
+                        if (dataIndex < data.length) {
+                            samplesFound = true;
+                            const datum = data[dataIndex];
+                            if (datum < min) min = datum;
+                            if (datum > max) max = datum;
+                        }
                     }
-                    canvasCtx.moveTo(i, (1 + min) * amp);
-                    canvasCtx.lineTo(i, (1 + max) * amp);
+                    if (samplesFound) {
+                        canvasCtx.moveTo(i, (1 + min) * amp);
+                        canvasCtx.lineTo(i, (1 + max) * amp);
+                    }
                 }
                 canvasCtx.stroke();
                 drawHandles();
@@ -390,7 +420,7 @@
                 const width = waveformCanvas.width;
                 const height = waveformCanvas.height;
                 const startX = trimStart * width;
-                const endX = trimEnd * width;
+                const endX = Math.min(width - 2, trimEnd * width); // Ensure handle is visible
 
                 canvasCtx.fillStyle = 'rgba(255, 0, 0, 0.5)';
                 canvasCtx.fillRect(startX, 0, 2, height);
@@ -447,16 +477,37 @@
 
             playTrimBtn.addEventListener('click', () => {
                 const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                const start = Math.floor(trimStart * currentAudioBuffer.length);
-                const end = Math.ceil(trimEnd * currentAudioBuffer.length);
-                const newLength = end - start;
-                const newBuffer = audioContext.createBuffer(1, newLength, currentAudioBuffer.sampleRate);
-                currentAudioBuffer.copyFromChannel(newBuffer.getChannelData(0), 0, start);
-
                 const source = audioContext.createBufferSource();
-                source.buffer = newBuffer;
+                source.buffer = currentAudioBuffer;
+
+                const offset = trimStart * currentAudioBuffer.duration;
+                const duration = (trimEnd - trimStart) * currentAudioBuffer.duration;
+
                 source.connect(audioContext.destination);
-                source.start();
+                source.start(0, offset, duration);
+
+                // Animate the playhead
+                const startTime = audioContext.currentTime;
+                const width = playheadCanvas.width;
+                const height = playheadCanvas.height;
+                const startX = trimStart * width;
+                const endX = trimEnd * width;
+
+                function animatePlayhead() {
+                    const elapsedTime = audioContext.currentTime - startTime;
+                    const progress = elapsedTime / duration;
+                    playheadCtx.clearRect(0, 0, width, height);
+
+                    if (progress < 1) {
+                        const x = startX + (progress * (endX - startX));
+                        playheadCtx.fillStyle = 'rgba(0, 0, 255, 0.5)';
+                        playheadCtx.fillRect(x, 0, 2, height);
+                        requestAnimationFrame(animatePlayhead);
+                    } else {
+                        playheadCtx.clearRect(0, 0, width, height);
+                    }
+                }
+                requestAnimationFrame(animatePlayhead);
             });
 
             // From https://github.com/mattdiamond/Recorderjs

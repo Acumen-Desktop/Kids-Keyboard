@@ -1,0 +1,12 @@
+# Environment variables
+.env
+
+# macOS
+.DS_Store
+
+# Notes
+_notes/
+
+# IDEs & Tools
+.vscode/
+.claude/
