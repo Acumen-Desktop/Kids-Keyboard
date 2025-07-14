@@ -123,14 +123,7 @@ export function attachEventListeners(container, tutorContainer, handlers, state)
     container.addEventListener('mouseup', handlers.handleMouseUpOrOut);
     container.addEventListener('mouseout', handlers.handleMouseUpOrOut);
     
-    if (tutorContainer) {
-        tutorContainer.addEventListener('mouseenter', () => {
-            handlers.handleTutorModeToggle(true);
-        });
-        tutorContainer.addEventListener('mouseleave', () => {
-            handlers.handleTutorModeToggle(false);
-        });
-    }
+    // Removed automatic mouse hover activation - now manual control only
     
     const handleKeyDown = (event) => handlers.handlePhysicalKeyDown(event, state);
     const handleKeyUp = (event) => handlers.handlePhysicalKeyUp(event, state);

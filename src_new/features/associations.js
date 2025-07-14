@@ -54,7 +54,8 @@ export function getKeyInfo(key) {
 
     if (association) {
         return {
-            name: `${upperKey} is for ${association.name}`,
+            key,
+            name: `is for ${association.name}`,
             sound: `says '${key.toLowerCase()}'`,
             emoji: association.emoji,
             category: 'letter'
@@ -63,6 +64,7 @@ export function getKeyInfo(key) {
 
     if (key.match(/^[0-9]$/)) {
         return {
+            key,
             name: `Number ${key}`,
             sound: `is ${key}`,
             category: 'number'
@@ -72,30 +74,35 @@ export function getKeyInfo(key) {
     switch (key) {
         case 'Space':
             return { 
+                key,
                 name: 'Space Bar', 
                 sound: 'makes a space',
                 category: 'function'
             };
         case 'Enter':
             return { 
+                key,
                 name: 'Enter Key', 
                 sound: 'starts a new line',
                 category: 'function'
             };
         case 'Backspace':
             return { 
+                key,
                 name: 'Backspace Key', 
                 sound: 'erases text',
                 category: 'function'
             };
         case 'Tab':
             return { 
+                key,
                 name: 'Tab Key', 
                 sound: 'makes a big space',
                 category: 'function'
             };
         case 'CapsLock':
             return { 
+                key,
                 name: 'Caps Lock', 
                 sound: 'makes BIG letters',
                 category: 'modifier'
@@ -103,12 +110,14 @@ export function getKeyInfo(key) {
         case 'ShiftLeft':
         case 'ShiftRight':
             return { 
+                key,
                 name: 'Shift Key', 
                 sound: 'changes letters',
                 category: 'modifier'
             };
         default:
             return { 
+                key,
                 name: key, 
                 sound: '',
                 category: 'symbol'

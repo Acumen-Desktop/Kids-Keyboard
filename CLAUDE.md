@@ -6,130 +6,149 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Kids Keyboard is a lightweight, educational virtual keyboard designed specifically for children's typing education (ages 3-8+). It follows a progressive learning approach starting with pre-school children who have no knowledge of numbers or alphabet.
 
-**Current Version**: 0.9.0 (with audio features from v0.10.0 in development)
+**Current Version**: 1.0.0 - Complete functional architecture refactor with production-ready features
+
+## ⚠️ IMPORTANT: New Architecture Available
+
+**Primary Development**: Use `src_new/` directory - complete functional rewrite
+**Legacy Code**: `src/` directory maintained for reference only
+
+The project has been completely refactored into a clean, functional architecture in `src_new/` that replaces the monolithic `src/` implementation.
 
 ## Essential Commands
 
-### Development
-- `npm test` - Currently placeholder, tests planned for v1.0.0
-- Open `examples/index.html`, `examples/audio.html`, or `examples/stats.html` in browser for testing
-- No build step required - files work directly with modern bundlers
+### Development (src_new/)
+- Open `src_new/example.html` in browser for complete feature testing
+- No build step required - works directly with modern bundlers
+- All features integrated in single demo
 
-### Testing Examples
-- **Basic**: `examples/index.html` - Main examples and feature showcase
-- **Audio**: `examples/audio.html` - Audio system testing (Phase 1A features)
-- **Statistics**: `examples/stats.html` - Working example with statistics tracking
+### Testing Examples  
+- **Primary**: `src_new/example.html` - Complete functional system demo
+- **Legacy**: `examples/` directory - Original implementation (reference only)
 
-## Architecture
+## Architecture (src_new/)
 
-### Core Structure
+### Functional Architecture Structure
 ```
-src/
-├── kids-keyboard.js         # Main UMD module (no build step needed)
-├── kids-keyboard.css        # BEM-namespaced styles
-├── kids-keyboard.d.ts       # TypeScript definitions
-├── kids-keyboard-core.css   # Core keyboard styles
-├── kids-keyboard-layout.css # Layout-specific styles
-└── features/
-    └── kids-keyboard-audio-webAPI.js  # Phase 1A audio system
+src_new/
+├── core/                    # Essential keyboard functionality  
+│   ├── keyboard-data.js     # Static layouts, key mappings, constants
+│   ├── keyboard-state.js    # Pure state management functions
+│   ├── keyboard-dom.js      # DOM creation & manipulation  
+│   └── keyboard-events.js   # Event handling logic
+├── features/                # Educational enhancements
+│   ├── audio-system.js      # Web Speech API integration
+│   ├── visual-display.js    # Smart visual feedback system
+│   ├── associations.js      # Letter/animal memory aids
+│   ├── lessons.js           # Interactive typing lessons
+│   └── statistics.js        # Learning progress tracking
+├── styles/                  # Modular CSS architecture
+│   ├── keyboard-core.css    # Base keyboard styles (BEM)
+│   └── layout.css           # Responsive layout & theming
+├── kids-keyboard.js         # Main functional web component
+├── index.js                 # Entry point & exports
+├── example.html             # Live demo
+└── README.md               # Complete documentation
 ```
 
-### Key Design Principles
-- **No Build Step**: Works directly with Vite, Webpack, Rollup
-- **BEM CSS**: All classes namespaced with `kids-keyboard__` to prevent conflicts
-- **Progressive Enhancement**: Each phase builds on previous functionality
-- **Educational Focus**: Designed for pre-school through elementary children
+### Design Philosophy
+- **Functional Programming**: Pure functions with immutable state
+- **Modular Design**: Small, focused files with single responsibilities  
+- **No Build Step**: Works directly with modern bundlers
+- **Zero Dependencies**: Complete system with no external libraries
+- **Educational First**: Every feature designed for children's learning
 
-### HTML Structure (Post v0.9.0 Refactoring)
+### Web Component Usage
 ```html
-<div id="kids-keyboard-tutor">           <!-- Main container -->
-  <div id="kids-keyboard-output">        <!-- Upper section (flex) -->
-    <textarea id="kids-keyboard-text"></textarea>  <!-- Left: typing output -->
-    <div id="kids-keyboard-display"></div>         <!-- Right: educational content -->
-  </div>
-  <div id="kids-keyboard-input"></div>    <!-- Lower section: virtual keyboard -->
-</div>
+<!-- Simple integration -->
+<kids-keyboard 
+    learning-mode="associations"
+    enable-audio="true"
+    auto-tutor="false">
+</kids-keyboard>
+
+<script type="module" src="./src_new/index.js"></script>
 ```
 
-## Educational Development Phases
+## Smart Interaction System ✅ COMPLETE
 
-### Phase 1A: Audio System ✅ COMPLETE
-- Web Speech API integration
-- Audio toggle with persistent settings
-- Phonetic sounds for letters ("A says 'ah'")
-- Located in: `src/features/kids-keyboard-audio-webAPI.js`
+### Dual-Mode Audio Feedback
+- **Physical Keyboard**: Fast letter names at 2x speed ("a", "b", "c") for rapid typing
+- **Virtual Clicks**: Full educational content ("A is for Apple") for learning exploration
+- **Kid-Friendly Voices**: Auto-selects appropriate Web Speech API voices
+- **Persistent Settings**: Audio preferences saved in localStorage
 
-### Phase 1B: Key Information Display ⏳ NEXT PRIORITY
-- Large letter display when keys are clicked
-- Visual feedback with animations
-- Educational content in `#kids-keyboard-display` area
+### Adaptive Visual Display  
+- **Physical Keyboard**: Simple "A a" display with smart case highlighting
+  - Active case (uppercase/lowercase) highlighted in blue based on Shift/CapsLock state
+  - Inactive case shown in grey
+  - Teaches modifier key effects in real-time
+- **Virtual Clicks**: Compact educational content ("D" + "is for Dog" + 🐶)
 
-### Phase 1C: Animal/Object Associations ⏳ PLANNED
-- Memory aids (A=Apple🍎, B=Bear🐻)
-- Enhanced audio with associations
-- Visual learning cards
+### Manual Tutor Mode Control
+- **Toggle Button**: 🎯 ON / ⚫ OFF manual control (replaces automatic hover)
+- **Normal Typing**: When OFF, allows typing in other page elements
+- **Educational Mode**: When ON, captures physical keyboard for learning features
 
-### Future Phases
-- Phase 2: Finger positioning guides (ages 5-6)
-- Phase 3: Simple word building (ages 6-8)  
-- Phase 4: AI-powered personalized learning (ages 8+)
+## Educational Features ✅ ALL COMPLETE
 
-## Key Implementation Details
+### Letter Associations (Phase 1C)
+- A-Z mapped to memorable animals/objects with emojis (A=Apple🍎, B=Bear🐻, etc.)
+- Visual and auditory reinforcement for memory formation
+- Located in: `src_new/features/associations.js`
 
-### State Management
-- Located in `src/kids-keyboard.js` lines 56-63
-- Race condition fixes implemented
-- Proper Shift/CapsLock handling for letters vs symbols
+### Interactive Lessons (Phase 3A)  
+- Word-building exercises with real-time validation
+- Multiple difficulty levels (beginner, intermediate, advanced)
+- Progress tracking with celebrations and encouragement
+- Located in: `src_new/features/lessons.js`
 
-### Key Rendering
-- Main key creation logic: `src/kids-keyboard.js` lines 233-271
-- Differential DOM updates for performance
-- Clean HTML output without unnecessary attributes
+### Learning Analytics
+- Session statistics (keys typed, accuracy, typing speed)
+- Historical progress tracking with local storage
+- Achievement system with unlockable badges
+- Privacy-focused (all data stored locally)
+- Located in: `src_new/features/statistics.js`
 
-### CSS Architecture
-- BEM methodology: `.kids-keyboard__element--modifier`
-- Responsive design: Desktop (45px keys) → Tablet (40px) → Mobile (35px)
-- Layout styles in `src/kids-keyboard-layout.css` lines 315-357
+## Key Implementation Details (src_new/)
 
-### Mouse-Based Tutor Mode
-- Hover activation over `tutorContainer` element
-- Visual feedback when active
-- Captures physical keyboard input during tutor mode
+### Functional State Management
+- **Pure Functions**: All state changes use immutable functions in `core/keyboard-state.js`
+- **Race Condition Free**: Centralized setState function prevents conflicts
+- **Smart Case Logic**: `isShiftPressed XOR isCapsLockOn` determines letter case
+- **Validation**: Input length limits and caret position validation
 
-## Breaking Changes in v0.9.0
+### Performance Optimizations
+- **Differential DOM Updates**: Only changes necessary elements via `core/keyboard-dom.js`
+- **Event Delegation**: Single event listener handles all virtual key presses
+- **CSS Transitions**: Smooth animations without JavaScript overhead
+- **Memory Management**: Proper cleanup of event listeners and state references
 
-### API Changes
-- `targetInput` → `targetOutput` (for semantic clarity)
-- `getTargetInput()` → `getTargetOutput()`
-- HTML element IDs simplified (removed `-container` suffixes)
+### Web Component Pattern
+- **Functional Architecture**: Class serves only as browser interface
+- **Pure Business Logic**: All functionality in pure functions outside the class
+- **No Shadow DOM**: Simple CSS with full tooling support
+- **Attribute-Driven**: Configuration via HTML attributes
 
-### New Structure
-- Split output into separate text and display areas
-- Ready for educational content in display panel
+### CSS Architecture (styles/)
+- **BEM Methodology**: `.kids-keyboard__element--modifier` naming
+- **Modular Files**: Separate core keyboard and layout concerns
+- **Responsive Design**: Desktop (45px) → Tablet (40px) → Mobile (35px)
+- **Accessibility**: High contrast, reduced motion, print styles
 
-## TypeScript Support
+## Important Files for Development
 
-Comprehensive type definitions in `src/kids-keyboard.d.ts`:
-- `KidsKeyboardOptions` - Constructor configuration
-- `KidsKeyboardState` - Current keyboard state
-- `KidsKeyboard` - Main instance interface
+### Core System (src_new/)
+- `kids-keyboard.js` - Main web component (functional pattern)
+- `core/keyboard-state.js` - Pure state management functions
+- `core/keyboard-dom.js` - DOM creation and manipulation
+- `features/audio-system.js` - Smart dual-mode audio system
+- `features/visual-display.js` - Adaptive visual feedback
+- `README.md` - Complete documentation for users and developers
 
-## Important Files for Understanding
-
-### Core Implementation
-- `src/kids-keyboard.js` - Main library (review state management and key rendering)
-- `src/kids-keyboard.css` - BEM styles with alphabetized properties
-- `src/kids-keyboard.d.ts` - Complete TypeScript definitions
-
-### Educational Development
-- `_notes/development-plan.md` - Complete roadmap and educational philosophy
-- `src/features/kids-keyboard-audio-webAPI.js` - Audio system implementation
-- `examples/audio.html` - Working audio feature demonstration
-
-### Current Examples
-- `examples/stats.html` - Best working example with new v0.9.0 structure
-- `examples/index.html` - Main feature showcase
-- `examples/audio.html` - Audio system testing
+### Legacy Reference (src/)
+- Maintained for comparison and migration reference only
+- **Do not use for new development**
 
 ## Development Guidelines
 

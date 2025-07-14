@@ -28,7 +28,7 @@ let displayState = {
     isInitialized: false
 };
 
-export function initializeDisplay(container) {
+export function initializeDisplay(container, displayArea = null) {
     if (!container) {
         console.error('Display: Container required for initialization');
         return false;
@@ -36,17 +36,24 @@ export function initializeDisplay(container) {
 
     injectDisplayStyles();
     
-    displayState.displayElement = findOrCreateElement(
-        DISPLAY_CONFIG.displayElementId,
-        'kids-keyboard-key-display',
-        container
-    );
-    
-    displayState.infoPanel = findOrCreateElement(
-        DISPLAY_CONFIG.infoPanelId,
-        'kids-keyboard-info-panel',
-        container
-    );
+    // Use the provided display area instead of creating separate elements
+    if (displayArea) {
+        displayState.displayElement = displayArea;
+        displayState.infoPanel = displayArea;
+    } else {
+        // Fallback to old behavior for compatibility
+        displayState.displayElement = findOrCreateElement(
+            DISPLAY_CONFIG.displayElementId,
+            'kids-keyboard-key-display',
+            container
+        );
+        
+        displayState.infoPanel = findOrCreateElement(
+            DISPLAY_CONFIG.infoPanelId,
+            'kids-keyboard-info-panel',
+            container
+        );
+    }
     
     displayState.isInitialized = true;
     return true;
@@ -72,57 +79,110 @@ function findOrCreateElement(id, className, container) {
     return element;
 }
 
-export function updateKeyDisplay(key, keyInfo) {
+export function updateKeyDisplay(key, keyInfo, isPhysicalKeyboard = false, keyboardState = null) {
     if (!displayState.isInitialized) {
         console.warn('Display not initialized. Call initializeDisplay() first.');
         return;
     }
 
-    updateLargeKeyDisplay(key);
-    updateInfoPanel(keyInfo);
+    if (isPhysicalKeyboard) {
+        updateSimpleDisplay(key, keyboardState);
+    } else {
+        updateEnhancedDisplay(key, keyInfo);
+    }
 }
 
-function updateLargeKeyDisplay(key) {
+function updateSimpleDisplay(key, keyboardState) {
     const { displayElement } = displayState;
     if (!displayElement) return;
 
-    displayElement.textContent = key;
-    displayElement.style.backgroundColor = getKeyColor(key);
+    // For physical keyboard: show both uppercase and lowercase
+    const lowerKey = key.toLowerCase();
+    const upperKey = key.toUpperCase();
     
-    // Trigger animation
-    displayElement.classList.remove(DISPLAY_CONFIG.keyPressAnimation);
-    void displayElement.offsetWidth; // Force reflow
-    displayElement.classList.add(DISPLAY_CONFIG.keyPressAnimation);
+    let content = '';
+    
+    if (/^[a-z]$/i.test(key)) {
+        // Determine which case should be active based on keyboard state
+        const shouldUseUppercase = keyboardState ? 
+            (keyboardState.isShiftPressed !== keyboardState.isCapsLockOn) : 
+            false;
+        
+        // Letters: show "A a" format with active case highlighted
+        content = `
+            <div class="simple-key-display">
+                <span class="simple-key-upper ${shouldUseUppercase ? 'active-case' : 'inactive-case'}">${upperKey}</span>
+                <span class="simple-key-lower ${!shouldUseUppercase ? 'active-case' : 'inactive-case'}">${lowerKey}</span>
+            </div>
+        `;
+    } else if (/^[0-9]$/.test(key)) {
+        // Numbers: just show the number
+        content = `<div class="simple-key-display">${key}</div>`;
+    } else {
+        // Function keys: show the key name
+        const displayName = getDisplayName(key);
+        content = `<div class="simple-key-display simple-key-function">${displayName}</div>`;
+    }
+    
+    displayElement.innerHTML = content;
+    displayElement.className = 'simple-display-container';
+    
+    // Brief animation
+    displayElement.classList.add(DISPLAY_CONFIG.fadeInAnimation);
+    setTimeout(() => {
+        displayElement.classList.remove(DISPLAY_CONFIG.fadeInAnimation);
+    }, 300);
 }
 
-function updateInfoPanel(keyInfo) {
-    const { infoPanel } = displayState;
-    if (!infoPanel || !keyInfo) return;
+function updateEnhancedDisplay(key, keyInfo) {
+    const { displayElement } = displayState;
+    if (!displayElement || !keyInfo) return;
 
-    let html = '';
+    // For virtual keyboard: show compact educational content
+    let html = `<div class="enhanced-display-container">`;
     
-    if (keyInfo.name) {
-        html += `<div class="info-name">${keyInfo.name}</div>`;
+    // For letters with associations, show compact format
+    if (keyInfo.category === 'letter' && keyInfo.emoji) {
+        html += `
+            <div class="compact-letter-display">
+                <span class="compact-key">${key.toUpperCase()}</span>
+                <span class="compact-text">${keyInfo.name}</span>
+                <span class="compact-emoji">${keyInfo.emoji}</span>
+            </div>
+        `;
+    } else {
+        // For other keys, show simple format
+        html += `
+            <div class="compact-other-display">
+                <span class="compact-key">${key}</span>
+                <span class="compact-name">${keyInfo.name || key}</span>
+            </div>
+        `;
     }
     
-    if (keyInfo.sound) {
-        html += `<div class="info-sound">${keyInfo.sound}</div>`;
+    html += `</div>`;
+    
+    displayElement.innerHTML = html;
+    displayElement.className = 'enhanced-display-container';
+    
+    // Trigger animation
+    displayElement.classList.add(DISPLAY_CONFIG.fadeInAnimation);
+    setTimeout(() => {
+        displayElement.classList.remove(DISPLAY_CONFIG.fadeInAnimation);
+    }, 300);
+}
+
+function getDisplayName(key) {
+    switch (key) {
+        case 'Space': return 'Space';
+        case 'Enter': return 'Enter';
+        case 'Backspace': return 'Backspace';
+        case 'Tab': return 'Tab';
+        case 'CapsLock': return 'Caps Lock';
+        case 'ShiftLeft':
+        case 'ShiftRight': return 'Shift';
+        default: return key;
     }
-    
-    if (keyInfo.emoji) {
-        html += `<div class="info-emoji">${keyInfo.emoji}</div>`;
-    }
-    
-    if (keyInfo.category) {
-        html += `<div class="info-category">${keyInfo.category}</div>`;
-    }
-    
-    infoPanel.innerHTML = html;
-    
-    // Trigger fade-in animation
-    infoPanel.classList.remove(DISPLAY_CONFIG.fadeInAnimation);
-    void infoPanel.offsetWidth; // Force reflow
-    infoPanel.classList.add(DISPLAY_CONFIG.fadeInAnimation);
 }
 
 function getKeyColor(key) {
@@ -150,7 +210,7 @@ export function clearDisplay() {
     
     if (displayElement) {
         displayElement.textContent = '';
-        displayElement.style.backgroundColor = 'transparent';
+        // displayElement.style.backgroundColor = 'transparent';
         displayElement.classList.remove(DISPLAY_CONFIG.keyPressAnimation);
     }
     
@@ -207,6 +267,105 @@ function injectDisplayStyles() {
     if (document.getElementById(styleId)) return;
 
     const styles = `
+        /* Simple display for physical keyboard */
+        .simple-display-container {
+            padding: 20px;
+            text-align: center;
+            background: #f8f9fa;
+            border-radius: 10px;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .simple-key-display {
+            font-size: 80px;
+            font-weight: bold;
+            font-family: 'Arial', sans-serif;
+            color: #333;
+        }
+
+        .simple-key-upper {
+            font-size: 80px;
+            margin-right: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .simple-key-lower {
+            font-size: 80px;
+            transition: all 0.3s ease;
+        }
+
+        .active-case {
+            color: #2196F3;
+            font-weight: bold;
+            text-shadow: 0 2px 4px rgba(33, 150, 243, 0.3);
+        }
+
+        .inactive-case {
+            color: #999;
+            font-weight: normal;
+        }
+
+        .simple-key-function {
+            font-size: 24px;
+            color: #ff9800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Enhanced display for virtual keyboard */
+        .enhanced-display-container {
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            text-align: center;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .compact-letter-display {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .compact-key {
+            font-size: 48px;
+            font-weight: bold;
+            color: #2196F3;
+            font-family: 'Arial', sans-serif;
+        }
+
+        .compact-text {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+            font-family: 'Arial', sans-serif;
+        }
+
+        .compact-emoji {
+            font-size: 48px;
+        }
+
+        .compact-other-display {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .compact-name {
+            font-size: 14px;
+            color: #666;
+            font-family: 'Arial', sans-serif;
+        }
+
+        /* Legacy styles for compatibility */
         .kids-keyboard-key-display {
             width: 150px;
             height: 150px;

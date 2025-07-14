@@ -39,24 +39,15 @@ const createComponentHTML = (data) => {
         <link rel="stylesheet" href="./styles/layout.css">
         
         <div id="kids-keyboard-tutor">
-            <div class="kids-keyboard__controls">
-                <h3>Kids Keyboard</h3>
-                <div class="kids-keyboard__control-group">
-                    <span class="kids-keyboard__control-label">Audio:</span>
-                    <div id="audio-toggle-container"></div>
-                </div>
-                <div class="kids-keyboard__control-group">
-                    <span class="kids-keyboard__control-label">Mode:</span>
-                    <select id="learning-mode-select" class="kids-keyboard__select">
-                        <option value="associations">Letter Associations</option>
-                        <option value="lessons">Typing Lessons</option>
-                    </select>
-                </div>
-                <div class="kids-keyboard__control-group">
-                    <button id="start-lesson-btn" class="kids-keyboard__button">Start Lesson</button>
-                    <button id="end-lesson-btn" class="kids-keyboard__button kids-keyboard__button--secondary">End Lesson</button>
-                    <button id="clear-text-btn" class="kids-keyboard__button kids-keyboard__button--danger">Clear Text</button>
-                </div>
+            <!-- Compact pill-shaped toggles overlapping top border -->
+            <div class="kids-keyboard__pill-toggles">
+                <button id="tutor-toggle-btn" class="kids-keyboard__pill-toggle kids-keyboard__tutor-toggle" aria-label="Toggle tutor mode">
+                    🎯 ON
+                </button>
+                <select id="learning-mode-select" class="kids-keyboard__pill-toggle kids-keyboard__mode-select">
+                    <option value="associations">🍎 Associations</option>
+                    <option value="lessons">📚 Lessons</option>
+                </select>
             </div>
             
             <div id="kids-keyboard-output">
@@ -65,6 +56,12 @@ const createComponentHTML = (data) => {
             </div>
             
             <div id="kids-keyboard-input"></div>
+            
+            <div class="kids-keyboard__lesson-controls">
+                <button id="start-lesson-btn" class="kids-keyboard__button">Start Lesson</button>
+                <button id="end-lesson-btn" class="kids-keyboard__button kids-keyboard__button--secondary">End Lesson</button>
+                <button id="clear-text-btn" class="kids-keyboard__button kids-keyboard__button--danger">Clear Text</button>
+            </div>
             
             <div class="kids-keyboard__stats" id="stats-panel">
                 <h4>Session Statistics</h4>
@@ -100,11 +97,11 @@ const initializeKeyboard = (element, data) => {
     // Initialize features
     if (data.enableAudio) {
         initializeAudio();
-        const audioToggleContainer = element.querySelector('#audio-toggle-container');
+        const audioToggleContainer = element.querySelector('#kids-keyboard-tutor');
         createAudioToggleButton(audioToggleContainer);
     }
     
-    initializeDisplay(container);
+    initializeDisplay(container, displayArea);
     
     // State management
     const setState = (newState) => {
@@ -135,12 +132,13 @@ const initializeKeyboard = (element, data) => {
         // Get key information for display/audio
         const keyInfo = getKeyInfo(key);
         
-        // Update display
-        updateKeyDisplay(key, keyInfo);
+        // Update display - simple for physical keyboard, enhanced for virtual clicks
+        const isPhysicalKeyboard = source === 'physical';
+        updateKeyDisplay(key, keyInfo, isPhysicalKeyboard, state);
         
-        // Play audio
+        // Play audio - fast for physical keyboard, full for virtual clicks
         if (data.enableAudio) {
-            speakKeyInfo(keyInfo);
+            speakKeyInfo(keyInfo, isPhysicalKeyboard);
         }
         
         // Track statistics
@@ -204,13 +202,13 @@ const initializeKeyboard = (element, data) => {
     keyElements = renderKeyboard(container);
     cleanup = attachEventListeners(container, tutorContainer, enhancedHandlers, state);
     
-    // Setup UI event listeners
-    setupUIEventListeners(element, data);
+    // Setup UI event listeners with setState access
+    setupUIEventListeners(element, data, setState, () => state);
     
     return { state, setState, cleanup };
 };
 
-const setupUIEventListeners = (element, data) => {
+const setupUIEventListeners = (element, data, setState, getCurrentState) => {
     // Learning mode selector
     const modeSelect = element.querySelector('#learning-mode-select');
     if (modeSelect) {
@@ -244,16 +242,48 @@ const setupUIEventListeners = (element, data) => {
     const clearTextBtn = element.querySelector('#clear-text-btn');
     if (clearTextBtn) {
         clearTextBtn.addEventListener('click', () => {
+            // Clear text by updating keyboard state
+            const currentState = getCurrentState();
+            const newState = {
+                ...currentState,
+                input: '',
+                caretPosition: 0
+            };
+            setState(newState);
+            
+            // Also manually sync the textarea to ensure it updates
             const textArea = element.querySelector('#kids-keyboard-text');
             if (textArea) {
                 textArea.value = '';
-                textArea.dispatchEvent(new Event('input', { bubbles: true }));
+                textArea.setSelectionRange(0, 0);
             }
+            
             clearDisplay();
         });
     }
     
+    // Tutor mode toggle button
+    const tutorToggleBtn = element.querySelector('#tutor-toggle-btn');
+    if (tutorToggleBtn) {
+        tutorToggleBtn.addEventListener('click', () => {
+            // Toggle tutor mode using setState function
+            const textArea = element.querySelector('#kids-keyboard-text');
+            const currentState = getCurrentState();
+            const newTutorMode = !currentState.isTutorModeActive;
+            
+            const newState = newTutorMode 
+                ? activateTutorMode(currentState, textArea)
+                : deactivateTutorMode(currentState);
+            
+            setState(newState);
+            
+            // Update button appearance
+            updateTutorModeButton(element, newTutorMode);
+        });
+    }
+    
     updateLessonButtons(element);
+    updateTutorModeButton(element, data.autoTutor);
 };
 
 const updateLessonButtons = (element) => {
@@ -263,6 +293,21 @@ const updateLessonButtons = (element) => {
     
     if (startBtn) startBtn.disabled = active;
     if (endBtn) endBtn.disabled = !active;
+};
+
+const updateTutorModeButton = (element, isActive) => {
+    const tutorBtn = element.querySelector('#tutor-toggle-btn');
+    const tutorContainer = element.querySelector('#kids-keyboard-tutor');
+    
+    if (tutorBtn) {
+        tutorBtn.textContent = isActive ? '🎯 ON' : '⚫ OFF';
+        tutorBtn.title = isActive ? 'Turn off tutor mode' : 'Turn on tutor mode';
+        tutorBtn.classList.toggle('active', isActive);
+    }
+    
+    if (tutorContainer) {
+        tutorContainer.classList.toggle('active', isActive);
+    }
 };
 
 const updateStatsDisplay = (element) => {

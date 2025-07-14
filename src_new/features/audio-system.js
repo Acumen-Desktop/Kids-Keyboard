@@ -10,7 +10,8 @@
 
 const DEFAULT_CONFIG = Object.freeze({
     enabled: true,
-    rate: 0.8,        // Slower speech for kids
+    rate: 0.8,        // Slower speech for kids (UI interactions)
+    fastRate: 2.0,    // Fast speech for typing (physical keyboard)
     pitch: 1.1,       // Slightly higher pitch for friendliness
     volume: 0.8,
     voice: null,      // Auto-select kid-friendly voice
@@ -119,34 +120,75 @@ export function speakText(text, options = {}) {
     });
 }
 
-export function speakKeyInfo(keyInfo) {
+export function speakKeyInfo(keyInfo, fast = false) {
     if (!keyInfo) return Promise.resolve();
     
-    let text = '';
-    
-    if (keyInfo.name) {
-        text += keyInfo.name;
+    if (fast) {
+        // For fast typing, just speak the key itself
+        return speakKeyFast(keyInfo.key || '');
     }
     
-    if (keyInfo.sound) {
-        text += (text ? ' ' : '') + keyInfo.sound;
+    // Simplified educational description for VK clicks
+    if (keyInfo.category === 'letter' && keyInfo.name && keyInfo.key) {
+        // Add the letter back for speech: "Y is for Yak" format
+        const letter = keyInfo.key.toUpperCase();
+        return speakText(`${letter} ${keyInfo.name}`);
     }
     
-    return speakText(text);
+    // For other keys, speak the name
+    return speakText(keyInfo.name || keyInfo.key || '');
 }
 
-export function speakLetter(letter) {
+export function speakKeyFast(key) {
+    if (!key) return Promise.resolve();
+    
+    const lowerKey = key.toLowerCase();
+    
+    // Letters - just the letter name (A, B, C, etc.)
+    if (/^[a-z]$/.test(lowerKey)) {
+        return speakText(lowerKey, { rate: audioState.config.fastRate });
+    }
+    
+    // Numbers - just the number name
+    if (/^[0-9]$/.test(lowerKey)) {
+        return speakNumber(lowerKey, true);
+    }
+    
+    // Function keys - brief description at fast speed
+    switch (key) {
+        case 'Space':
+            return speakText('space', { rate: audioState.config.fastRate });
+        case 'Enter':
+            return speakText('enter', { rate: audioState.config.fastRate });
+        case 'Backspace':
+            return speakText('delete', { rate: audioState.config.fastRate });
+        case 'Tab':
+            return speakText('tab', { rate: audioState.config.fastRate });
+        default:
+            // For other keys, just speak the key name quickly
+            return speakText(key.toLowerCase(), { rate: audioState.config.fastRate });
+    }
+}
+
+export function speakLetter(letter, fast = false) {
     const lowerLetter = letter.toLowerCase();
     
     if (!/^[a-z]$/.test(lowerLetter)) {
         return Promise.resolve();
     }
     
-    const phonetic = getPhoneticSound(lowerLetter);
-    return speakText(`${letter.toUpperCase()} says ${phonetic}`);
+    if (fast) {
+        // Just the letter sound at fast speed for typing
+        const phonetic = getPhoneticSound(lowerLetter);
+        return speakText(phonetic, { rate: audioState.config.fastRate });
+    } else {
+        // Full educational description at normal speed for UI clicks
+        const phonetic = getPhoneticSound(lowerLetter);
+        return speakText(`${letter.toUpperCase()} says ${phonetic}`);
+    }
 }
 
-export function speakNumber(number) {
+export function speakNumber(number, fast = false) {
     if (!/^[0-9]$/.test(number)) {
         return Promise.resolve();
     }
@@ -156,7 +198,13 @@ export function speakNumber(number) {
         '5': 'five', '6': 'six', '7': 'seven', '8': 'eight', '9': 'nine'
     };
     
-    return speakText(`${number} is ${numberWords[number]}`);
+    if (fast) {
+        // Just the number name at fast speed for typing
+        return speakText(numberWords[number], { rate: audioState.config.fastRate });
+    } else {
+        // Full educational description at normal speed for UI clicks
+        return speakText(`${number} is ${numberWords[number]}`);
+    }
 }
 
 function getPhoneticSound(letter) {

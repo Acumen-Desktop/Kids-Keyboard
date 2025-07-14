@@ -30,7 +30,7 @@
     box-shadow: 0 4px 20px rgba(76, 175, 80, 0.25);
 }
 
-#kids-keyboard-tutor.active::after {
+/* #kids-keyboard-tutor.active::after {
     content: '🎯 Tutor Mode Active';
     position: absolute;
     top: -10px;
@@ -42,7 +42,7 @@
     font-size: 12px;
     font-weight: bold;
     z-index: 10;
-}
+} */
 
 /* Keyboard enhancement in tutor mode */
 #kids-keyboard-tutor .kids-keyboard {
@@ -62,6 +62,7 @@
     flex-direction: row;
     gap: 15px;
     margin-bottom: 20px;
+    margin-top: 10px;
 }
 
 #kids-keyboard-text {
@@ -69,20 +70,24 @@
     border: 2px solid #e0e0e0;
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    color: #333;
     flex: 1;
     font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
     font-size: 16px;
     line-height: 1.5;
     min-height: 120px;
     padding: 15px;
+    pointer-events: none;
     resize: vertical;
     transition: all 0.3s ease;
+    user-select: none;
 }
 
 #kids-keyboard-text:focus {
     background: white;
     border-color: #4CAF50;
     box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+    color: #333;
     outline: none;
 }
 
@@ -104,41 +109,67 @@
 }
 
 /* =============================================================================
-   CONTROL PANELS
+   PILL-SHAPED TOGGLE CONTROLS
    ============================================================================= */
 
-.kids-keyboard__controls {
-    background: #fff;
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-    margin-bottom: 15px;
-    padding: 15px;
-}
-
-.kids-keyboard__controls h3 {
-    color: #333;
-    font-size: 18px;
-    margin: 0 0 15px 0;
-}
-
-.kids-keyboard__control-group {
+.kids-keyboard__pill-toggles {
+    position: absolute;
+    top: -18px;
+    left: 10px;
+    right: 40px;
     display: flex;
-    gap: 10px;
+    gap: 8px;
+    justify-content: flex-start;
+    z-index: 10;
     margin-bottom: 10px;
-    align-items: center;
-    flex-wrap: wrap;
 }
 
-.kids-keyboard__control-group:last-child {
-    margin-bottom: 0;
-}
-
-.kids-keyboard__control-label {
-    font-size: 14px;
+.kids-keyboard__pill-toggle {
+    background: white;
+    border: 2px solid #e0e0e0;
+    border-radius: 20px;
+    padding: 6px 12px;
+    font-size: 13px;
     font-weight: 500;
     color: #555;
-    min-width: 80px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.kids-keyboard__pill-toggle:hover {
+    border-color: #4CAF50;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.kids-keyboard__mode-select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 8px center;
+    background-repeat: no-repeat;
+    background-size: 16px;
+    padding-right: 32px;
+    min-width: 120px;
+}
+
+.kids-keyboard__mode-select:focus {
+    outline: none;
+    border-color: #4CAF50;
+    box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+}
+
+/* =============================================================================
+   LESSON CONTROLS (MOVED BELOW KEYBOARD)
+   ============================================================================= */
+
+.kids-keyboard__lesson-controls {
+    display: flex;
+    gap: 10px;
+    margin: 15px 0;
+    justify-content: center;
+    flex-wrap: wrap;
 }
 
 .kids-keyboard__button {
@@ -190,6 +221,24 @@
 .kids-keyboard__select:focus {
     border-color: #4CAF50;
     outline: none;
+}
+
+.kids-keyboard__tutor-toggle {
+    background: #f44336;
+    color: white;
+}
+
+.kids-keyboard__tutor-toggle.active {
+    background: #4CAF50;
+    border-color: #4CAF50;
+}
+
+.kids-keyboard__tutor-toggle:hover {
+    background: #e53935;
+}
+
+.kids-keyboard__tutor-toggle.active:hover {
+    background: #45a049;
 }
 
 /* =============================================================================
