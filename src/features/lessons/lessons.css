@@ -1,0 +1,40 @@
+/**
+ * Kids Keyboard - Lessons Styles
+ * 
+ * @version 0.1.0
+ * @author James Swansburg
+ * @license MIT
+ */
+
+#word-display {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+    font-size: 48px;
+}
+
+.letter {
+    margin: 0 5px;
+    padding: 10px;
+    border-bottom: 3px solid #333;
+    width: 50px;
+    text-align: center;
+}
+
+.letter.correct {
+    color: green;
+}
+
+.letter.incorrect {
+    color: red;
+}
+
+.celebrate {
+    animation: celebrate-animation 1s ease-in-out;
+}
+
+@keyframes celebrate-animation {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}

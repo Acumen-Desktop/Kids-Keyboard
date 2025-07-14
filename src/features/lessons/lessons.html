@@ -5,40 +5,42 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kids Keyboard Lessons</title>
-    <link rel="stylesheet" href="../src/kids-keyboard.css">
+    <link rel="stylesheet" href="./lessons.css">
+    <link rel="stylesheet" href="../../kids-keyboard.css">
 
 </head>
 
 <body>
     <div id="app-container">
-        <h1>Kids Keyboard v0.9.0 - Example</h1>
+        <section id="title-bar" <h1>Kids Keyboard v0.9.0 - Lessons Demo</h1>
+            <button onclick="window.location.href = '../../../examples/index.html';">Home</button>
+        </section>
 
-        <div id="kids-keyboard-tutor">
-            <div id="kids-keyboard-output">
-                <textarea id="kids-keyboard-text"
-                    placeholder="Hover over this area to activate tutor mode, then start typing!"></textarea>
-                <div id="kids-keyboard-display">
-                </div>
-            </div>
-            <div id="kids-keyboard-input"></div>
+        <div id="lesson-container">
+            <h2 id="lesson-title"></h2>
+            <div id="lesson-content"></div>
         </div>
+
+        <kids-keyboard-shell></kids-keyboard-shell>
     </div>
 
-    <script src="../src/kids-keyboard.js"></script>
-    <script>
-        let keyboard;
-        const tutorContainer = document.getElementById('kids-keyboard-tutor');
+    <script type="module">
+        import '../shell/kids-keyboard-shell.js';
+        import createKidsKeyboard from '../../kids-keyboard.js';
+        import './lessons.js';
 
-        function initKeyboard() {
-            keyboard = createKidsKeyboard({
-                container: '#kids-keyboard-input',
-                targetOutput: '#kids-keyboard-text',
-                tutorContainer: '#kids-keyboard-tutor',
+        document.addEventListener('DOMContentLoaded', function () {
+            const shell = document.querySelector('kids-keyboard-shell');
+            const shadowRoot = shell.shadowRoot;
+
+            const keyboard = createKidsKeyboard({
+                container: shadowRoot.getElementById('kids-keyboard-input'),
+                targetOutput: shadowRoot.getElementById('kids-keyboard-text'),
                 debug: true,
 
                 onChange: (input) => {
                     console.log('Input changed:', input);
-                    updateStats();
+                    checkInput(input);
                 },
 
                 onKeyPress: (key) => {
@@ -46,24 +48,18 @@
                 },
 
                 onTutorModeChange: (isActive) => {
+                    const tutorContainer = shadowRoot.getElementById('kids-keyboard-tutor');
+                    const tutorToggleButton = shadowRoot.getElementById('tutor-mode-toggle');
                     console.log('Tutor mode:', isActive ? 'ON' : 'OFF');
-                    document.getElementById('kids-keyboard-tutor-mode').textContent = isActive ? 'ON' : 'OFF';
                     tutorContainer.classList.toggle('active', isActive);
+                    tutorToggleButton.textContent = `Tutor Mode: ${isActive ? 'ON' : 'OFF'}`;
+                    tutorToggleButton.classList.toggle('active', isActive);
                 }
             });
-        }
 
-
-        // Initialize when page loads
-        document.addEventListener('DOMContentLoaded', function () {
-            initKeyboard();
-
-            // Sync external typing with keyboard
-            document.getElementById('kids-keyboard-text').addEventListener('input', function (e) {
-                if (keyboard && !keyboard.isTutorModeActive()) {
-                    keyboard.setInput(e.target.value);
-                }
-                updateStats();
+            const tutorToggleButton = shadowRoot.getElementById('tutor-mode-toggle');
+            tutorToggleButton.addEventListener('click', () => {
+                keyboard.toggleTutorMode();
             });
 
             console.log('✅ Kids Keyboard v0.9.0 loaded successfully!');

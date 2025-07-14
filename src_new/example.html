@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kids Keyboard - New Architecture Demo</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-style: italic;
+        }
+        
+        .example-section {
+            margin-bottom: 40px;
+            padding: 20px;
+            border: 2px dashed #e0e0e0;
+            border-radius: 10px;
+        }
+        
+        .example-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #4CAF50;
+            margin-bottom: 10px;
+        }
+        
+        .code-block {
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+        }
+        
+        .features-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .feature-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #4CAF50;
+        }
+        
+        .feature-title {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .feature-desc {
+            color: #666;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎹 Kids Keyboard - New Architecture</h1>
+        <p class="subtitle">Clean, functional, maintainable educational typing system</p>
+        
+        <div class="example-section">
+            <div class="example-title">✨ Live Demo</div>
+            <p>This is the new functional web component in action:</p>
+            
+            <!-- Simple usage with just the tag -->
+            <kids-keyboard 
+                learning-mode="associations"
+                enable-audio="true" 
+                auto-tutor="true">
+            </kids-keyboard>
+        </div>
+        
+        <div class="example-section">
+            <div class="example-title">🚀 Key Improvements</div>
+            
+            <div class="features-list">
+                <div class="feature-item">
+                    <div class="feature-title">Functional Architecture</div>
+                    <div class="feature-desc">Pure functions, immutable state, no side effects</div>
+                </div>
+                
+                <div class="feature-item">
+                    <div class="feature-title">Small Focused Files</div>
+                    <div class="feature-desc">Single responsibility, easy to understand</div>
+                </div>
+                
+                <div class="feature-item">
+                    <div class="feature-title">No Shadow DOM</div>
+                    <div class="feature-desc">Simple CSS, full tooling support</div>
+                </div>
+                
+                <div class="feature-item">
+                    <div class="feature-title">No Build Step</div>
+                    <div class="feature-desc">Works directly with modern bundlers</div>
+                </div>
+                
+                <div class="feature-item">
+                    <div class="feature-title">Progressive Features</div>
+                    <div class="feature-desc">Audio, lessons, stats, associations</div>
+                </div>
+                
+                <div class="feature-item">
+                    <div class="feature-title">Educational Focus</div>
+                    <div class="feature-desc">Designed for children ages 3-8</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="example-section">
+            <div class="example-title">📁 New File Structure</div>
+            <div class="code-block">src_new/
+├── core/
+│   ├── keyboard-data.js      # Static layouts, mappings
+│   ├── keyboard-state.js     # Pure state functions
+│   ├── keyboard-dom.js       # DOM creation & updates
+│   └── keyboard-events.js    # Event handling logic
+├── features/
+│   ├── audio-system.js       # Web Speech API
+│   ├── visual-display.js     # Animations & feedback
+│   ├── associations.js       # Letter/animal data
+│   ├── lessons.js           # Word building lessons
+│   └── statistics.js        # Usage tracking
+├── styles/
+│   ├── keyboard-core.css    # Base keyboard styles
+│   └── layout.css           # Responsive layout
+├── kids-keyboard.js         # Main web component
+└── index.js                 # Entry point & exports</div>
+        </div>
+        
+        <div class="example-section">
+            <div class="example-title">🔧 Usage Examples</div>
+            
+            <p><strong>Simple HTML usage:</strong></p>
+            <div class="code-block">&lt;kids-keyboard learning-mode="associations"&gt;&lt;/kids-keyboard&gt;</div>
+            
+            <p><strong>Programmatic usage:</strong></p>
+            <div class="code-block">import { createKidsKeyboard } from './src_new/index.js';
+
+const keyboard = createKidsKeyboard('#container', {
+    learningMode: 'lessons',
+    enableAudio: true,
+    autoTutor: true
+});</div>
+            
+            <p><strong>Feature access:</strong></p>
+            <div class="code-block">import { startLesson, getSessionStats } from './src_new/index.js';
+
+// Start a typing lesson
+startLesson(container, 'beginner');
+
+// Get usage statistics
+const stats = getSessionStats();</div>
+        </div>
+        
+        <div class="example-section">
+            <div class="example-title">🎯 How It Works</div>
+            <p>Following the functional web component pattern:</p>
+            <ol>
+                <li><strong>Pure data parsing</strong> - Extract configuration from attributes</li>
+                <li><strong>Functional HTML generation</strong> - Create markup from data</li>
+                <li><strong>Feature initialization</strong> - Set up audio, display, lessons</li>
+                <li><strong>Event handling</strong> - Process user interactions functionally</li>
+                <li><strong>State management</strong> - Immutable state updates</li>
+            </ol>
+            
+            <p>The web component class is just a thin browser interface - all the real logic lives in pure, testable functions.</p>
+        </div>
+    </div>
+    
+    <script type="module" src="./index.js"></script>
+</body>
+</html>

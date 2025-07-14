@@ -7,6 +7,8 @@
     
     <!-- DEPENDENCIES -->
     <link rel="stylesheet" href="../../src/kids-keyboard.css">
+    <link rel="stylesheet" href="../../src/features/kids-keyboard-finger-guides.css">
+    <link rel="stylesheet" href="../../src/features/lessons/lessons.css">
     <link rel="stylesheet" href="../../examples/stats.css">
     
     <!-- PAGE STYLES -->
@@ -65,11 +67,10 @@
         <p>This example demonstrates the fully optimized and functional audio system, using the new unified audio script.</p>
 
         <div class="control-panel">
-            <h2>Audio Controls</h2>
+            <h2>Controls</h2>
             <button id="toggle-audio">Toggle Audio</button>
-            <button id="test-audio-primary">Test Primary Voice</button>
-            <button id="test-audio-secondary">Test Secondary Voice</button>
-            
+            <button id="toggle-mode">Toggle Mode</button>
+
             <div class="voice-selection" style="margin-top: 15px;">
                 <label for="primary-voice-select">Primary Voice (Fast):</label>
                 <select id="primary-voice-select"></select>
@@ -94,7 +95,11 @@
             </div>
         </div>
 
+        <div id="kids-keyboard-info-panel"></div>
+        <div id="kids-keyboard-key-display"></div>
+
         <div id="kids-keyboard-tutor">
+            <button id="tutor-mode-toggle">🎯 Tutor Mode: OFF</button>
             <div id="kids-keyboard-output">
                 <textarea id="kids-keyboard-text" placeholder="Hover here and type!"></textarea>
                 <div id="kids-keyboard-display"></div>
@@ -104,154 +109,36 @@
     </div>
 
     <!-- DEPENDENCIES -->
-    <script src="../../src/kids-keyboard.js"></script>
-    <script src="../../src/features/audio/kids-keyboard-audio.js"></script>
+    <script type="module">
+        import createKidsKeyboard from '../../src/kids-keyboard.js';
+        import { createKidsKeyboardAudio } from '../../src/features/audio/kids-keyboard-audio.js';
+        import { getLetterAssociation } from '../../src/features/kids-keyboard-associations.js';
 
-    <script>
         document.addEventListener('DOMContentLoaded', async () => {
-            let audioSystem;
+            let learningMode = 'associations';
+            const audio = createKidsKeyboardAudio({ rate: 1.5, pitch: 1.2 });
 
-            // Initialize Audio System
-            try {
-                audioSystem = await createKidsKeyboardAudio({
-                    rate: 2.0,
-                    pitch: 1.1
-                });
-                updateStatus();
-                populateVoiceLists();
-                setupAudioControls();
-            } catch (error) {
-                console.error('Failed to initialize audio system:', error);
-                document.getElementById('status-text').textContent = 'Error initializing audio';
-                return;
-            }
-
-            // Initialize Keyboard
-            const keyboard = createKidsKeyboard({
+            let keyboard = createKidsKeyboard({
                 container: '#kids-keyboard-input',
                 targetOutput: '#kids-keyboard-text',
-                tutorContainer: '#kids-keyboard-tutor',
-                debug: false,
-
-                onKeyPress: (key, event, inputSource) => {
-                    if (!audioSystem) return;
-
-                    if (inputSource === 'physical') {
-                        audioSystem.playPhysicalKeySound(key);
-                    } else {
-                        audioSystem.playVirtualKeySound(key);
-                    }
+                learningMode: learningMode,
+                onKeyPress: (key) => {
+                    audio.playKeySound(key);
                 }
             });
 
-            // --- UI Event Listeners ---
-            function setupAudioControls() {
-                const toggleBtn = document.getElementById('toggle-audio');
-                toggleBtn.addEventListener('click', () => {
-                    if (audioSystem) {
-                        audioSystem.toggle();
-                        updateStatus();
+            document.getElementById('toggle-mode').addEventListener('click', () => {
+                learningMode = learningMode === 'associations' ? 'signLanguage' : 'associations';
+                keyboard.destroy();
+                keyboard = createKidsKeyboard({
+                    container: '#kids-keyboard-input',
+                    targetOutput: '#kids-keyboard-text',
+                    learningMode: learningMode,
+                    onKeyPress: (key) => {
+                        audio.playKeySound(key);
                     }
                 });
-
-                document.getElementById('test-audio-primary').addEventListener('click', () => {
-                    if (audioSystem) {
-                        audioSystem.test();
-                    }
-                });
-
-                document.getElementById('test-audio-secondary').addEventListener('click', () => {
-                    if (audioSystem) {
-                        audioSystem.testSecondary();
-                    }
-                });
-
-                document.getElementById('primary-voice-select').addEventListener('change', (e) => {
-                    if (audioSystem) {
-                        audioSystem.setPrimaryVoice(e.target.value);
-                        updateStatus();
-                    }
-                });
-
-                document.getElementById('secondary-voice-select').addEventListener('change', (e) => {
-                    if (audioSystem) {
-                        audioSystem.setSecondaryVoice(e.target.value);
-                        updateStatus();
-                    }
-                });
-
-                const rateSlider = document.getElementById('rate-slider');
-                rateSlider.addEventListener('input', (e) => {
-                    if (audioSystem) {
-                        const rate = parseFloat(e.target.value);
-                        audioSystem.setRate(rate);
-                        document.getElementById('rate-value').textContent = rate.toFixed(1);
-                    }
-                });
-
-                const pitchSlider = document.getElementById('pitch-slider');
-                pitchSlider.addEventListener('input', (e) => {
-                    if (audioSystem) {
-                        const pitch = parseFloat(e.target.value);
-                        audioSystem.setPitch(pitch);
-                        document.getElementById('pitch-value').textContent = pitch.toFixed(1);
-                    }
-                });
-            }
-
-            // --- Helper Functions ---
-            function updateStatus() {
-                if (!audioSystem) return;
-                const status = audioSystem.getStatus();
-                const statusText = `
-                    Supported: ${status.supported}, 
-                    Initialized: ${status.initialized}, 
-                    Enabled: ${status.enabled}, 
-                    Primary Voice: ${status.primaryVoice},
-                    Secondary Voice: ${status.secondaryVoice}
-                `;
-                document.getElementById('status-text').textContent = statusText;
-                
-                const toggleBtn = document.getElementById('toggle-audio');
-                toggleBtn.textContent = status.enabled ? 'Audio ON' : 'Audio OFF';
-                toggleBtn.classList.toggle('active', status.enabled);
-            }
-
-            function populateVoiceLists() {
-                if (!audioSystem || !audioSystem.isSupported()) return;
-                
-                const primarySelect = document.getElementById('primary-voice-select');
-                const secondarySelect = document.getElementById('secondary-voice-select');
-                
-                const voices = audioSystem.getVoices();
-                const primaryVoice = audioSystem.getPrimaryVoice();
-                const secondaryVoice = audioSystem.getSecondaryVoice();
-
-                primarySelect.innerHTML = '';
-                secondarySelect.innerHTML = '';
-                
-                voices
-                    .filter(v => v.lang.startsWith('en'))
-                    .forEach(voice => {
-                        // Populate primary list
-                        const primaryOption = document.createElement('option');
-                        primaryOption.value = voice.name;
-                        primaryOption.textContent = `${voice.name} (${voice.lang})`;
-                        if (primaryVoice && voice.name === primaryVoice.name) {
-                            primaryOption.selected = true;
-                        }
-                        primarySelect.appendChild(primaryOption);
-
-                        // Populate secondary list
-                        const secondaryOption = document.createElement('option');
-                        secondaryOption.value = voice.name;
-                        secondaryOption.textContent = `${voice.name} (${voice.lang})`;
-                        if (secondaryVoice && voice.name === secondaryVoice.name) {
-                            secondaryOption.selected = true;
-                        }
-                        secondarySelect.appendChild(secondaryOption);
-                    });
-            }
+            });
         });
     </script>
 

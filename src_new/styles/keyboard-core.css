@@ -1,0 +1,313 @@
+/**
+ * Kids Keyboard - Core Styles
+ * 
+ * Essential keyboard and key styles that remain stable.
+ * BEM methodology with kids-keyboard namespace.
+ * 
+ * @version 1.0.0
+ * @license MIT
+ */
+
+/* =============================================================================
+   KEYBOARD CONTAINER
+   ============================================================================= */
+
+.kids-keyboard {
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    background-color: #f5f5f5;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    margin: 0 auto;
+    max-width: 800px;
+    min-width: 320px;
+    padding: 12px;
+    position: relative;
+    user-select: none;
+}
+
+/* =============================================================================
+   KEYBOARD ROWS
+   ============================================================================= */
+
+.kids-keyboard__row {
+    display: flex;
+    gap: 4px;
+    justify-content: center;
+    margin-bottom: 6px;
+}
+
+.kids-keyboard__row:last-child {
+    margin-bottom: 0;
+}
+
+/* =============================================================================
+   KEYBOARD KEYS - BASE STYLES
+   ============================================================================= */
+
+.kids-keyboard__key {
+    align-items: center;
+    background: white;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    display: flex;
+    font-size: 16px;
+    font-weight: 500;
+    justify-content: center;
+    min-height: 45px;
+    min-width: 45px;
+    outline: none;
+    position: relative;
+    transition: all 0.15s ease;
+}
+
+/* Hover and Focus States */
+.kids-keyboard__key:hover,
+.kids-keyboard__key:focus {
+    border-color: #bbb;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+    transform: translateY(-1px);
+}
+
+/* Focus handling - prevent persistent blue highlights on mouse clicks */
+.kids-keyboard__key:focus {
+    outline: none;
+}
+
+.kids-keyboard__key:focus-visible {
+    outline: 2px solid #2196F3;
+    outline-offset: 2px;
+}
+
+.kids-keyboard__key:active {
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    transform: translateY(0);
+}
+
+/* =============================================================================
+   KEY TYPES - STYLING BY FUNCTION
+   ============================================================================= */
+
+/* Character keys (letters, numbers, symbols) */
+.kids-keyboard__key--character {
+    flex: 1;
+}
+
+/* Function keys (Backspace, Enter, Tab, etc.) */
+.kids-keyboard__key--function {
+    background: #f8f9fa;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+/* Modifier keys (Shift, Caps Lock, etc.) */
+.kids-keyboard__key--modifier {
+    background: #fff3cd;
+    border-color: #ffeaa7;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+/* Space bar */
+.kids-keyboard__key--space {
+    flex: 6;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+/* =============================================================================
+   SPECIFIC KEY SIZING
+   ============================================================================= */
+
+.kids-keyboard__key[data-key="backspace"] {
+    flex: 2.5;
+}
+
+.kids-keyboard__key[data-key="tab"] {
+    flex: 1.5;
+}
+
+.kids-keyboard__key[data-key="capslock"] {
+    flex: 2.0;
+}
+
+.kids-keyboard__key[data-key="enter"] {
+    flex: 2.2;
+}
+
+.kids-keyboard__key[data-key="shiftleft"],
+.kids-keyboard__key[data-key="shiftright"] {
+    flex: 2.5;
+}
+
+/* =============================================================================
+   HIGHLIGHTING STATES - PHYSICAL KEYBOARD SYNC
+   ============================================================================= */
+
+.kids-keyboard__key--highlighted {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    font-weight: 700;
+    transform: translateY(-2px);
+}
+
+/* Character keys when highlighted (green) */
+.kids-keyboard__key--highlight-normal {
+    background-color: #4CAF50 !important;
+    border-color: #45a049;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    color: white;
+    font-weight: 700;
+    transform: translateY(-2px);
+}
+
+/* Modifier keys when highlighted (yellow) */
+.kids-keyboard__key--highlight-modifier {
+    background-color: #FFC107 !important;
+    border-color: #ffb300;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    color: #333;
+    font-weight: 700;
+    transform: translateY(-2px);
+}
+
+/* Function keys when highlighted (blue) */
+.kids-keyboard__key--highlight-function {
+    background-color: #2196F3 !important;
+    border-color: #1976D2;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    color: white;
+    font-weight: 700;
+    transform: translateY(-2px);
+}
+
+/* =============================================================================
+   ACTIVE MODIFIER STATES
+   ============================================================================= */
+
+.kids-keyboard__key--active-modifier {
+    background-color: #ff9800;
+    border-color: #f57c00;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+    color: white;
+}
+
+.kids-keyboard__key--active-modifier.kids-keyboard__key--highlighted {
+    background-color: #ff6f00 !important;
+    border-color: #e65100;
+}
+
+/* =============================================================================
+   LAYOUT SWITCHING - DUAL CHARACTER DISPLAY
+   ============================================================================= */
+
+/* Default character display */
+.kids-keyboard__key .kids-keyboard__key-char--default {
+    display: block;
+}
+
+.kids-keyboard__key .kids-keyboard__key-char--shift {
+    display: none;
+}
+
+/* Shift layout - show shifted characters */
+.kids-keyboard--shift-layout .kids-keyboard__key .kids-keyboard__key-char--default {
+    display: none;
+}
+
+.kids-keyboard--shift-layout .kids-keyboard__key .kids-keyboard__key-char--shift {
+    display: block;
+}
+
+/* =============================================================================
+   AUDIO TOGGLE BUTTON
+   ============================================================================= */
+
+.kids-keyboard__audio-toggle {
+    background: #fff;
+    border: 2px solid #ddd;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 20px;
+    height: 40px;
+    position: absolute;
+    right: 10px;
+    top: 10px;
+    transition: all 0.2s ease;
+    width: 40px;
+}
+
+.kids-keyboard__audio-toggle:hover {
+    background: #f0f0f0;
+    border-color: #999;
+    transform: scale(1.1);
+}
+
+.kids-keyboard__audio-toggle:active {
+    transform: scale(0.95);
+}
+
+/* =============================================================================
+   ACCESSIBILITY ENHANCEMENTS
+   ============================================================================= */
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .kids-keyboard__key {
+        border-width: 3px;
+    }
+    
+    .kids-keyboard__key--highlight-normal {
+        background-color: #2E7D32 !important;
+    }
+    
+    .kids-keyboard__key--highlight-modifier {
+        background-color: #F57F17 !important;
+    }
+    
+    .kids-keyboard__key--highlight-function {
+        background-color: #1565C0 !important;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .kids-keyboard__key,
+    .kids-keyboard__audio-toggle {
+        transition: none;
+    }
+    
+    .kids-keyboard__key:hover,
+    .kids-keyboard__key:focus,
+    .kids-keyboard__key--highlighted {
+        transform: none;
+    }
+}
+
+/* =============================================================================
+   PRINT STYLES
+   ============================================================================= */
+
+@media print {
+    .kids-keyboard {
+        border: 1px solid #ccc;
+        box-shadow: none;
+    }
+    
+    .kids-keyboard__key {
+        box-shadow: none;
+    }
+    
+    .kids-keyboard__audio-toggle {
+        display: none;
+    }
+}

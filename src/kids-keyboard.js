@@ -35,6 +35,12 @@
 // BROWSER COMPATIBILITY CHECKS
 // =============================================================================
 
+import { initializeDisplay, updateKeyDisplay, injectDisplayStyles } from './features/kids-keyboard-display.js';
+import { getLetterAssociation } from './features/kids-keyboard-associations.js';
+import { createFingerGuides, highlightFinger } from './features/kids-keyboard-finger-guides.js';
+import { injectSignLanguageFont, createSignLanguageDisplay, showSign } from './features/kids-keyboard-sign-language.js';
+import * as lessonManager from './features/lessons/lessons.js';
+
 const BROWSER_SUPPORT = {
     hasEventListeners: typeof document.addEventListener === 'function',
     hasQuerySelector: typeof document.querySelector === 'function',
@@ -459,7 +465,7 @@ function createKidsKeyboard(options = {}) {
     const defaultOptions = {
         debug: false,
         targetOutput: null,
-        tutorContainer: null
+        learningMode: 'associations' // 'associations', 'signLanguage', or 'lesson'
     };
     const mergedOptions = { ...defaultOptions, ...options };
 
@@ -498,33 +504,21 @@ function createKidsKeyboard(options = {}) {
         }
     }
 
-    // Get tutor container for mouse-based activation
-    let tutorContainer = null;
-    if (mergedOptions.tutorContainer) {
-        try {
-            tutorContainer = typeof mergedOptions.tutorContainer === 'string' 
-                ? document.querySelector(mergedOptions.tutorContainer)
-                : mergedOptions.tutorContainer;
-        } catch (error) {
-            console.warn(`Invalid tutor container selector: ${mergedOptions.tutorContainer}`);
-        }
-    } else {
-        // Auto-detect tutor container by looking for parent with 'tutor' in ID
-        let current = container.parentElement;
-        while (current && current !== document.body) {
-            if (current.id && current.id.includes('tutor')) {
-                tutorContainer = current;
-                break;
-            }
-            current = current.parentElement;
-        }
-    }
-
     // Initialize state and elements
     let state = createKeyboardState();
     const keyElements = new Map();
     const physicalKeyMap = getPhysicalKeyMap();
     
+    // Initialize the display feature
+    if (mergedOptions.learningMode === 'associations') {
+        injectDisplayStyles();
+        initializeDisplay(container);
+    } else if (mergedOptions.learningMode === 'signLanguage') {
+        injectSignLanguageFont();
+        createSignLanguageDisplay(container);
+    }
+    createFingerGuides(container);
+
     // Track tutor mode state
     let isTutorMode = false;
 
@@ -549,10 +543,56 @@ function createKidsKeyboard(options = {}) {
     };
 
     /**
+ * Generates descriptive information for a given key.
+ * @param {string} key - The key identifier (e.g., 'a', '1', 'Backspace').
+ * @returns {object} An object with name and sound properties.
+ */
+const getKeyInfo = (key) => {
+    const upperKey = key.toUpperCase();
+    const association = getLetterAssociation(key);
+
+    if (association) {
+        return {
+            name: `${upperKey} is for ${association.name}`,
+            sound: `says '${key.toLowerCase()}'`,
+            emoji: association.emoji
+        };
+    }
+
+    if (key.match(/^[0-9]$/)) {
+        return {
+            name: `Number ${key}`,
+            sound: `is ${key}`
+        };
+    }
+
+    switch (key) {
+        case 'Space': return { name: 'Space Bar', sound: 'makes a space' };
+        case 'Enter': return { name: 'Enter Key', sound: 'starts a new line' };
+        case 'Backspace': return { name: 'Backspace Key', sound: 'erases text' };
+        default: return { name: key, sound: '' };
+    }
+};
+
+    /**
      * Handles key press events from both virtual and physical keyboards
      */
     const handleKeyPress = (key, event, inputSource = 'unknown') => {
         safeCallback(mergedOptions.onKeyPress, key, event, inputSource);
+
+        if (lessonManager.isLessonActive()) {
+            lessonManager.handleKeyPress(key);
+            return; // Don't process regular input during lessons
+        }
+
+        if (mergedOptions.learningMode === 'associations') {
+            const keyInfo = getKeyInfo(key);
+            updateKeyDisplay(key, keyInfo);
+        } else if (mergedOptions.learningMode === 'signLanguage') {
+            showSign(key);
+        }
+
+        highlightFinger(key);
 
         let newState = { ...state };
         let inputChanged = false;
@@ -676,48 +716,7 @@ function createKidsKeyboard(options = {}) {
         }
     };
 
-    /**
-     * Mouse enter handler for tutor mode activation
-     */
-    const handleTutorEnter = (event) => {
-        isTutorMode = true;
-        if (mergedOptions.debug) {
-            console.log('Tutor mode activated (mouse enter)');
-        }
-        
-        // Sync keyboard state with target output
-        if (targetOutput) {
-            setState({
-                ...state,
-                input: targetOutput.value || '',
-                caretPosition: targetOutput.selectionStart || 0
-            });
-        }
-        
-        // Add visual indicator to tutor container
-        if (tutorContainer) {
-            tutorContainer.classList.add('active');
-        }
-        
-        safeCallback(mergedOptions.onTutorModeChange, true);
-    };
-
-    /**
-     * Mouse leave handler for tutor mode deactivation
-     */
-    const handleTutorLeave = (event) => {
-        isTutorMode = false;
-        if (mergedOptions.debug) {
-            console.log('Tutor mode deactivated (mouse leave)');
-        }
-        
-        // Remove visual indicator from tutor container
-        if (tutorContainer) {
-            tutorContainer.classList.remove('active');
-        }
-        
-        safeCallback(mergedOptions.onTutorModeChange, false);
-    };
+    
 
     /**
      * Renders the keyboard interface
@@ -733,18 +732,6 @@ function createKidsKeyboard(options = {}) {
     const setupEventListeners = () => {
         document.addEventListener('keydown', handlePhysicalKeyDown);
         document.addEventListener('keyup', handlePhysicalKeyUp);
-        
-        // Setup mouse-based tutor mode activation
-        if (tutorContainer) {
-            tutorContainer.addEventListener('mouseenter', handleTutorEnter);
-            tutorContainer.addEventListener('mouseleave', handleTutorLeave);
-            
-            if (mergedOptions.debug) {
-                console.log('Mouse-based tutor mode enabled on:', tutorContainer.id || tutorContainer.className);
-            }
-        } else if (mergedOptions.debug) {
-            console.warn('No tutor container found - tutor mode activation disabled');
-        }
     };
 
     /**
@@ -754,12 +741,6 @@ function createKidsKeyboard(options = {}) {
         document.removeEventListener('keydown', handlePhysicalKeyDown);
         document.removeEventListener('keyup', handlePhysicalKeyUp);
         
-        // Remove tutor container event listeners
-        if (tutorContainer) {
-            tutorContainer.removeEventListener('mouseenter', handleTutorEnter);
-            tutorContainer.removeEventListener('mouseleave', handleTutorLeave);
-        }
-        
         // Clear DOM and references
         container.innerHTML = '';
         keyElements.clear();
@@ -767,7 +748,6 @@ function createKidsKeyboard(options = {}) {
         // Clear state references for garbage collection
         state = null;
         targetOutput = null;
-        tutorContainer = null;
     };
 
     // Initialize the keyboard
@@ -816,6 +796,27 @@ function createKidsKeyboard(options = {}) {
         // Tutor mode methods
         isTutorModeActive: () => isTutorMode,
         getTargetOutput: () => targetOutput,
+        toggleTutorMode: () => {
+            isTutorMode = !isTutorMode;
+            if (isTutorMode) {
+                if (targetOutput) {
+                    setState({
+                        ...state,
+                        input: targetOutput.value || '',
+                        caretPosition: targetOutput.selectionStart || 0
+                    });
+                }
+            }
+            safeCallback(mergedOptions.onTutorModeChange, isTutorMode);
+        },
+
+        // Lesson methods
+        startLesson: () => {
+            lessonManager.startLesson(document.getElementById('kids-keyboard-output'));
+        },
+        endLesson: () => {
+            lessonManager.endLesson();
+        },
 
         // Lifecycle methods
         destroy
@@ -837,3 +838,6 @@ if (typeof module !== 'undefined' && module.exports) {
     // Browser global
     window.createKidsKeyboard = createKidsKeyboard;
 }
+
+// Add a default export for ES6 modules
+export default createKidsKeyboard;

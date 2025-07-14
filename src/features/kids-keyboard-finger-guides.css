@@ -1,0 +1,39 @@
+/**
+ * Kids Keyboard - Finger Positioning Guides Styles
+ * 
+ * @version 0.1.0
+ * @author James Swansburg
+ * @license MIT
+ */
+
+#kids-keyboard-finger-guides {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.hand {
+    display: flex;
+}
+
+.left-hand {
+    margin-right: 50px;
+}
+
+.finger {
+    width: 40px;
+    height: 120px;
+    border: 2px solid #333;
+    border-radius: 10px;
+    margin: 0 5px;
+    transition: background-color 0.2s;
+}
+
+.finger.thumb {
+    height: 80px;
+    align-self: flex-end;
+}
+
+.finger.active {
+    background-color: #a0c4ff;
+}
