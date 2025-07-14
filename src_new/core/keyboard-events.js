@@ -18,8 +18,14 @@ export function createEventHandlers(callbacks = {}) {
         onError = () => {}
     } = callbacks;
 
-    function handleVirtualKeyClick(event) {
+    function handleVirtualKeyClick(event, state) {
         if (!event.target.matches('.kids-keyboard__key')) return;
+        
+        // Block virtual keyboard clicks when tutor mode is off
+        if (!state.isTutorModeActive) {
+            event.preventDefault();
+            return;
+        }
         
         event.preventDefault();
         const keyName = event.target.dataset.key;
@@ -117,22 +123,24 @@ function shouldPreventDefault(virtualKey) {
     );
 }
 
-export function attachEventListeners(container, tutorContainer, handlers, state) {
-    container.addEventListener('click', handlers.handleVirtualKeyClick);
+export function attachEventListeners(container, tutorContainer, handlers, getCurrentState) {
+    const handleVirtualClick = (event) => handlers.handleVirtualKeyClick(event, getCurrentState());
+    
+    container.addEventListener('click', handleVirtualClick);
     container.addEventListener('mousedown', handlers.handleMouseDown);
     container.addEventListener('mouseup', handlers.handleMouseUpOrOut);
     container.addEventListener('mouseout', handlers.handleMouseUpOrOut);
     
     // Removed automatic mouse hover activation - now manual control only
     
-    const handleKeyDown = (event) => handlers.handlePhysicalKeyDown(event, state);
-    const handleKeyUp = (event) => handlers.handlePhysicalKeyUp(event, state);
+    const handleKeyDown = (event) => handlers.handlePhysicalKeyDown(event, getCurrentState());
+    const handleKeyUp = (event) => handlers.handlePhysicalKeyUp(event, getCurrentState());
     
     document.addEventListener('keydown', handleKeyDown);
     document.addEventListener('keyup', handleKeyUp);
     
     return function cleanup() {
-        container.removeEventListener('click', handlers.handleVirtualKeyClick);
+        container.removeEventListener('click', handleVirtualClick);
         container.removeEventListener('mousedown', handlers.handleMouseDown);
         container.removeEventListener('mouseup', handlers.handleMouseUpOrOut);
         container.removeEventListener('mouseout', handlers.handleMouseUpOrOut);

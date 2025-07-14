@@ -95,24 +95,37 @@ export function speakText(text, options = {}) {
     
     return new Promise((resolve, reject) => {
         try {
+            // Cancel any pending speech and wait a moment for it to take effect
             audioState.synthesis.cancel();
             
-            const utterance = new SpeechSynthesisUtterance(text);
-            const config = { ...audioState.config, ...options };
-            
-            utterance.voice = audioState.selectedVoice;
-            utterance.rate = config.rate;
-            utterance.pitch = config.pitch;
-            utterance.volume = config.volume;
-            utterance.lang = config.language;
-            
-            utterance.onend = () => resolve();
-            utterance.onerror = (error) => {
-                console.warn('Speech synthesis error:', error);
-                reject(error);
-            };
-            
-            audioState.synthesis.speak(utterance);
+            setTimeout(() => {
+                try {
+                    const utterance = new SpeechSynthesisUtterance(text);
+                    const config = { ...audioState.config, ...options };
+                    
+                    utterance.voice = audioState.selectedVoice;
+                    utterance.rate = config.rate;
+                    utterance.pitch = config.pitch;
+                    utterance.volume = config.volume;
+                    utterance.lang = config.language;
+                    
+                    utterance.onend = () => resolve();
+                    utterance.onerror = (error) => {
+                        // Don't log or reject on interruption/canceled errors - they're expected
+                        if (error.error === 'interrupted' || error.error === 'canceled') {
+                            resolve();
+                        } else {
+                            console.warn('Speech synthesis error:', error);
+                            reject(error);
+                        }
+                    };
+                    
+                    audioState.synthesis.speak(utterance);
+                } catch (innerError) {
+                    console.warn('Failed to speak text (inner):', innerError);
+                    reject(innerError);
+                }
+            }, 10);
         } catch (error) {
             console.warn('Failed to speak text:', error);
             reject(error);

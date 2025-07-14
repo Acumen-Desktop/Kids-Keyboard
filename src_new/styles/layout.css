@@ -161,6 +161,52 @@
 }
 
 /* =============================================================================
+   KEYBOARD INPUT CONTAINER & DISABLED STATE
+   ============================================================================= */
+
+.kids-keyboard__input-container {
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+/* When tutor mode is OFF, grey out and disable the keyboard */
+.kids-keyboard__input-container.disabled {
+    opacity: 0.4;
+    pointer-events: none;
+    filter: grayscale(60%);
+}
+
+.kids-keyboard__input-container.disabled::after {
+    content: '⚫ Tutor Mode is OFF - Click 🎯 ON button to enable virtual keyboard';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 15px 20px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    text-align: center;
+    max-width: 300px;
+    z-index: 100;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    animation: fade-in-message 0.3s ease-out;
+}
+
+@keyframes fade-in-message {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+/* =============================================================================
    LESSON CONTROLS (MOVED BELOW KEYBOARD)
    ============================================================================= */
 
@@ -239,6 +285,15 @@
 
 .kids-keyboard__tutor-toggle.active:hover {
     background: #45a049;
+}
+
+.kids-keyboard__clear-btn {
+    background: #ff9800;
+    color: white;
+}
+
+.kids-keyboard__clear-btn:hover {
+    background: #f57c00;
 }
 
 /* =============================================================================

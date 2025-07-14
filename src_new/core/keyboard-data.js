@@ -90,7 +90,9 @@ export function transformCharacter(char, state) {
         return shouldUppercase ? char.toUpperCase() : char.toLowerCase();
     }
 
-    if (state.isShiftPressed) {
+    // Use same XOR logic for symbols as visual display
+    const shouldUseShifted = state.isShiftPressed !== state.isCapsLockOn;
+    if (shouldUseShifted) {
         return SHIFT_MAP[char] || char;
     }
 

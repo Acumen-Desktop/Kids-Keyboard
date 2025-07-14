@@ -13,7 +13,7 @@
 import { createInitialState, processKeyPress, updateModifierStates, activateTutorMode, deactivateTutorMode } from './core/keyboard-state.js';
 import { renderKeyboard, createTutorContainer, highlightKey, updateKeyStates, updateLayoutClass, syncTargetOutput } from './core/keyboard-dom.js';
 import { createEventHandlers, attachEventListeners } from './core/keyboard-events.js';
-import { PHYSICAL_KEY_MAP } from './core/keyboard-data.js';
+import { PHYSICAL_KEY_MAP, transformCharacter } from './core/keyboard-data.js';
 
 // Feature imports
 import { getKeyInfo } from './features/associations.js';
@@ -48,6 +48,9 @@ const createComponentHTML = (data) => {
                     <option value="associations">🍎 Associations</option>
                     <option value="lessons">📚 Lessons</option>
                 </select>
+                <button id="clear-text-btn" class="kids-keyboard__pill-toggle kids-keyboard__clear-btn" title="Clear text">
+                    🗑️ Clear
+                </button>
             </div>
             
             <div id="kids-keyboard-output">
@@ -55,12 +58,12 @@ const createComponentHTML = (data) => {
                 <div id="kids-keyboard-display"></div>
             </div>
             
-            <div id="kids-keyboard-input"></div>
+            <div id="kids-keyboard-input" class="kids-keyboard__input-container">
+            </div>
             
             <div class="kids-keyboard__lesson-controls">
                 <button id="start-lesson-btn" class="kids-keyboard__button">Start Lesson</button>
                 <button id="end-lesson-btn" class="kids-keyboard__button kids-keyboard__button--secondary">End Lesson</button>
-                <button id="clear-text-btn" class="kids-keyboard__button kids-keyboard__button--danger">Clear Text</button>
             </div>
             
             <div class="kids-keyboard__stats" id="stats-panel">
@@ -123,26 +126,38 @@ const initializeKeyboard = (element, data) => {
     
     // Event handlers
     const handleKeyPress = (key, event, source) => {
-        // Handle lessons first
-        if (isLessonActive()) {
-            const handled = handleLessonKeyPress(key);
-            if (handled) return;
+        // Handle different learning modes
+        if (data.learningMode === 'lessons') {
+            // Lessons mode: check if lesson is active
+            if (isLessonActive()) {
+                const handled = handleLessonKeyPress(key);
+                if (handled) return;
+            }
+        } else if (data.learningMode === 'associations') {
+            // Associations mode: always process normally
+            // This is the main educational mode for letter-animal associations
         }
         
-        // Get key information for display/audio
-        const keyInfo = getKeyInfo(key);
+        // For physical keyboard, use transformed character for audio/display consistency  
+        const isPhysicalKeyboard = source === 'physical';
+        const displayKey = isPhysicalKeyboard && key.length === 1 ? 
+            transformCharacter(key, state) : key;
+        
+        // Get key information for display/audio using the correct character
+        const keyInfo = getKeyInfo(displayKey);
         
         // Update display - simple for physical keyboard, enhanced for virtual clicks
-        const isPhysicalKeyboard = source === 'physical';
-        updateKeyDisplay(key, keyInfo, isPhysicalKeyboard, state);
+        updateKeyDisplay(displayKey, keyInfo, isPhysicalKeyboard, state);
         
         // Play audio - fast for physical keyboard, full for virtual clicks
         if (data.enableAudio) {
             speakKeyInfo(keyInfo, isPhysicalKeyboard);
         }
         
-        // Track statistics
-        trackKeyPress(key, true);
+        // Track statistics only in lessons mode
+        if (data.learningMode === 'lessons') {
+            trackKeyPress(key, true);
+        }
         
         // Process key press
         const newState = processKeyPress(state, key);
@@ -200,7 +215,7 @@ const initializeKeyboard = (element, data) => {
     
     // Render keyboard and setup events
     keyElements = renderKeyboard(container);
-    cleanup = attachEventListeners(container, tutorContainer, enhancedHandlers, state);
+    cleanup = attachEventListeners(container, tutorContainer, enhancedHandlers, () => state);
     
     // Setup UI event listeners with setState access
     setupUIEventListeners(element, data, setState, () => state);
@@ -216,8 +231,18 @@ const setupUIEventListeners = (element, data, setState, getCurrentState) => {
         modeSelect.addEventListener('change', (e) => {
             data.learningMode = e.target.value;
             element.setAttribute('learning-mode', e.target.value);
+            
+            // End any active lesson when switching modes
+            if (e.target.value === 'associations' && isLessonActive()) {
+                endLesson();
+            }
+            
+            updateModeUI(element, e.target.value);
         });
     }
+    
+    // Initialize mode UI
+    updateModeUI(element, data.learningMode);
     
     // Lesson controls
     const startLessonBtn = element.querySelector('#start-lesson-btn');
@@ -283,7 +308,9 @@ const setupUIEventListeners = (element, data, setState, getCurrentState) => {
     }
     
     updateLessonButtons(element);
-    updateTutorModeButton(element, data.autoTutor);
+    // Initialize tutor mode button with current state
+    const currentState = getCurrentState();
+    updateTutorModeButton(element, currentState.isTutorModeActive);
 };
 
 const updateLessonButtons = (element) => {
@@ -295,9 +322,44 @@ const updateLessonButtons = (element) => {
     if (endBtn) endBtn.disabled = !active;
 };
 
+const updateModeUI = (element, mode) => {
+    const lessonControls = element.querySelector('.kids-keyboard__lesson-controls');
+    const statsPanel = element.querySelector('#stats-panel');
+    const displayArea = element.querySelector('#kids-keyboard-display');
+    
+    if (lessonControls) {
+        // Show lesson controls only in lessons mode
+        lessonControls.style.display = mode === 'lessons' ? 'flex' : 'none';
+    }
+    
+    if (statsPanel) {
+        // Show statistics only in lessons mode
+        statsPanel.style.display = mode === 'lessons' ? 'block' : 'none';
+    }
+    
+    // Update display area based on mode
+    if (displayArea && mode === 'associations') {
+        // Clear any lesson content when switching to associations
+        displayArea.innerHTML = '';
+        displayArea.style.background = '#f8f9fa';
+    }
+    
+    // Mode-specific behavior
+    if (mode === 'associations') {
+        // Associations mode: focus on letter-animal learning
+        // All key presses show educational content
+        // No stats tracking - just exploration and learning
+    } else if (mode === 'lessons') {
+        // Lessons mode: structured learning with start/stop controls
+        // Key presses are processed by lesson system when lesson is active
+        // Stats tracking for progress measurement
+    }
+};
+
 const updateTutorModeButton = (element, isActive) => {
     const tutorBtn = element.querySelector('#tutor-toggle-btn');
     const tutorContainer = element.querySelector('#kids-keyboard-tutor');
+    const keyboardInput = element.querySelector('#kids-keyboard-input');
     
     if (tutorBtn) {
         tutorBtn.textContent = isActive ? '🎯 ON' : '⚫ OFF';
@@ -307,6 +369,11 @@ const updateTutorModeButton = (element, isActive) => {
     
     if (tutorContainer) {
         tutorContainer.classList.toggle('active', isActive);
+    }
+    
+    // Enable/disable keyboard input based on tutor mode state
+    if (keyboardInput) {
+        keyboardInput.classList.toggle('disabled', !isActive);
     }
 };
 
@@ -350,6 +417,7 @@ class KidsKeyboard extends HTMLElement {
         if (data.autoTutor) {
             setTimeout(() => {
                 this.keyboardInstance.setState(state => ({ ...state, isTutorModeActive: true }));
+                updateTutorModeButton(this, true);
             }, 100);
         }
     }
@@ -361,11 +429,22 @@ class KidsKeyboard extends HTMLElement {
         endSession();
     }
     
-    attributeChangedCallback() {
-        if (this.keyboardInstance) {
+    attributeChangedCallback(name, oldValue, newValue) {
+        // Don't re-initialize for learning-mode changes - handle them internally
+        if (name === 'learning-mode') {
+            return; // Mode changes are handled by the internal event listener
+        }
+        
+        if (this.keyboardInstance && oldValue !== newValue) {
+            // Clean up existing instance
+            if (this.keyboardInstance?.cleanup) {
+                this.keyboardInstance.cleanup();
+            }
+            
             const data = parseComponentData(this);
-            // Re-initialize if needed
-            this.connectedCallback();
+            // Re-initialize for other attribute changes
+            this.innerHTML = createComponentHTML(data);
+            this.keyboardInstance = initializeKeyboard(this, data);
         }
     }
     

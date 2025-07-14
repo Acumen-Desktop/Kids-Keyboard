@@ -10,6 +10,7 @@
 
 import { 
     KEYBOARD_LAYOUTS, 
+    SHIFT_MAP,
     getKeyType, 
     getKeyDisplayText, 
     getKeyMapName,
@@ -129,11 +130,23 @@ export function highlightKey(keyElements, key, highlight) {
 }
 
 export function updateKeyStates(keyElements, state) {
+    const shouldUseShifted = state.isShiftPressed !== state.isCapsLockOn;
+    
     keyElements.forEach((element, key) => {
         element.classList.remove(
             'kids-keyboard__key--active-modifier',
             'kids-keyboard__key--highlight-modifier'
         );
+        
+        // Update data-key attribute based on shift state for symbol keys
+        if (key.length === 1 && !key.match(/^[a-zA-Z]$/)) {
+            const baseKey = key.toLowerCase();
+            const shiftedKey = SHIFT_MAP[baseKey];
+            
+            if (shiftedKey) {
+                element.dataset.key = shouldUseShifted ? shiftedKey : baseKey;
+            }
+        }
         
         if (key === 'ShiftLeft' && state.isLeftShiftPressed) {
             element.classList.add('kids-keyboard__key--active-modifier');
