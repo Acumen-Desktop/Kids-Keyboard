@@ -10,3 +10,5 @@
 # IDEs & Tools
 .vscode/
 .claude/
+.claude/*
+.claude/**
